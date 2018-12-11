@@ -1,0 +1,22 @@
+{
+  "name": "ueb/conn",
+  "description": "Conexão ao banco de dados Mysql",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Edinei J. Bauer",
+      "email": "edineibauer@gmail.com"
+    }
+  ],
+  "require": {
+    "php": "^7.1"
+  },
+  "autoload": {
+    "psr-0": {
+      "Conn": "public/src/"
+    }
+  }
+}
+
+

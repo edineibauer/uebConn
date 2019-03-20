@@ -9,6 +9,8 @@
 
 namespace Conn;
 
+use Entity\React;
+
 class Delete extends Conn
 {
     private $tabela;
@@ -16,6 +18,8 @@ class Delete extends Conn
     private $places;
     private $result;
     private $erro;
+    private $react;
+    private $resultsUpdates;
 
     /** @var PDOStatement */
     private $delete;
@@ -31,14 +35,27 @@ class Delete extends Conn
         return $this->erro;
     }
 
+    /**
+     * @return mixed
+     */
+    public function getReact()
+    {
+        return $this->react->getResponse();
+    }
+
     public function exeDelete($tabela, $termos, $parseString)
     {
-        $this->setTabela($tabela);
-        $this->termos = (string)$termos;
+        $read = new Read();
+        $read->exeRead($tabela, $termos, $parseString);
+        if ($read->getResult()) {
+            $this->resultsUpdates = $read->getResult();
+            $this->setTabela($tabela);
+            $this->termos = (string)$termos;
 
-        parse_str($parseString, $this->places);
-        $this->getSyntax();
-        $this->execute();
+            parse_str($parseString, $this->places);
+            $this->getSyntax();
+            $this->execute();
+        }
     }
 
     public function getResult()
@@ -89,6 +106,7 @@ class Delete extends Conn
         try {
             $this->delete->execute($this->places);
             $this->result = true;
+            $this->react = new React("delete", str_replace(PRE, '', $this->tabela), $this->resultsUpdates, $this->resultsUpdates);
         } catch (\PDOException $e) {
             $this->result = null;
             $this->erro = "<b>Erro ao Deletar:</b> {$e->getMessage()}";

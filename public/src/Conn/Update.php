@@ -9,6 +9,9 @@
 
 namespace Conn;
 
+use Entity\Dicionario;
+use Entity\React;
+
 class Update extends Conn
 {
     private $tabela;
@@ -17,6 +20,8 @@ class Update extends Conn
     private $places;
     private $result;
     private $erro;
+    private $react;
+    private $resultsUpdates;
 
     /** @var PDOStatement */
     private $update;
@@ -33,6 +38,14 @@ class Update extends Conn
     }
 
     /**
+     * @return mixed
+     */
+    public function getReact()
+    {
+        return $this->react->getResponse();
+    }
+
+    /**
      * <b>Exe Update:</b> Executa uma atualização simplificada com Prepared Statments. Basta informar o
      * nome da tabela, os dados a serem atualizados em um Attay Atribuitivo, as condições e uma
      * analize em cadeia (ParseString) para executar.
@@ -43,13 +56,19 @@ class Update extends Conn
      */
     public function exeUpdate($tabela, array $dados, $termos, $parseString)
     {
-        $this->setTabela($tabela);
-        $this->dados = $dados;
-        $this->termos = (string)$termos;
+        $read = new Read();
+        $read->exeRead($tabela, $termos, $parseString);
+        if($read->getResult()) {
+            $this->resultsUpdates = $read->getResult();
+            $this->setTabela($tabela);
+            $this->dados = $dados;
+            $this->termos = (string)$termos;
+            parse_str($parseString, $this->places);
 
-        parse_str($parseString, $this->places);
-        $this->getSyntax();
-        $this->execute();
+            $this->getSyntax();
+            $this->execute();
+        }
+
     }
 
     /**
@@ -119,6 +138,13 @@ class Update extends Conn
         try {
             $this->update->execute(array_merge($this->dados, $this->places));
             $this->result = true;
+
+            foreach ($this->resultsUpdates[0] as $col => $value) {
+                if(!isset($this->dados[$col]))
+                    $this->dados[$col] = $value;
+            }
+
+            $this->react = new React("update", str_replace(PRE, '', $this->tabela), $this->dados, $this->resultsUpdates);
         } catch (\PDOException $e) {
             $this->result = null;
             $this->erro = "<b>(Update) Erro ao Ler: ({$this->tabela})</b> {$e->getMessage()}";

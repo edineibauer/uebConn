@@ -9,6 +9,8 @@
 
 namespace Conn;
 
+use Entity\React;
+
 class Create extends Conn
 {
     //teste
@@ -16,6 +18,7 @@ class Create extends Conn
     private $dados;
     private $result;
     private $erro;
+    private $react;
 
     /** @var PDOStatement */
     private $create;
@@ -29,6 +32,14 @@ class Create extends Conn
     public function getErro()
     {
         return $this->erro;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getReact()
+    {
+        return $this->react->getResponse();
     }
 
     /**
@@ -89,6 +100,8 @@ class Create extends Conn
         try {
             $this->create->execute($this->dados);
             $this->result = $this->conn->lastInsertId();
+            $this->dados['id'] = $this->result;
+            $this->react = new React("create", str_replace(PRE, '', $this->tabela), $this->dados);
         } catch (\PDOException $e) {
             $this->result = null;
             $this->erro = "<b>Erro ao cadastrar: ({$this->tabela})</b> {$e->getMessage()}";

@@ -54,7 +54,7 @@ class Update extends Conn
      * @param STRING $termos = WHERE coluna = :link AND.. OR..
      * @param STRING $parseString = link={$link}&link2={$link2}
      */
-    public function exeUpdate($tabela, array $dados, $termos, $parseString)
+    public function exeUpdate(string $tabela, array $dados, string $termos, $parseString = null)
     {
         $read = new Read();
         $read->exeRead($tabela, $termos, $parseString);
@@ -63,7 +63,11 @@ class Update extends Conn
             $this->setTabela($tabela);
             $this->dados = $dados;
             $this->termos = (string)$termos;
-            parse_str($parseString, $this->places);
+
+            if (!empty($parseString))
+                parse_str($parseString, $this->places);
+            else
+                $this->places = [];
 
             $this->getSyntax();
             $this->execute();
@@ -95,7 +99,7 @@ class Update extends Conn
      * da condição. Use este método para editar múltiplas linhas!
      * @param STRING $ParseString = id={$id}&..
      */
-    public function setPlaces($ParseString)
+    public function setPlaces(string $ParseString)
     {
         parse_str($ParseString, $this->places);
         $this->getSyntax();

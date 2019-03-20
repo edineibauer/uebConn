@@ -43,7 +43,12 @@ class Delete extends Conn
         return $this->react->getResponse();
     }
 
-    public function exeDelete($tabela, $termos, $parseString)
+    /**
+     * @param $tabela
+     * @param $termos
+     * @param null $parseString
+     */
+    public function exeDelete($tabela, $termos, $parseString = null)
     {
         $read = new Read();
         $read->exeRead($tabela, $termos, $parseString);
@@ -52,7 +57,11 @@ class Delete extends Conn
             $this->setTabela($tabela);
             $this->termos = (string)$termos;
 
-            parse_str($parseString, $this->places);
+            if (!empty($parseString))
+                parse_str($parseString, $this->places);
+            else
+                $this->places = [];
+            
             $this->getSyntax();
             $this->execute();
         }

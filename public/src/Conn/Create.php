@@ -39,7 +39,7 @@ class Create extends Conn
      */
     public function getReact()
     {
-        return $this->react->getResponse();
+        return ($this->react ? $this->react->getResponse() : null);
     }
 
     /**

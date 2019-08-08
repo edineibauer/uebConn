@@ -16,6 +16,7 @@ class Update extends Conn
 {
     private $tabela;
     private $dados;
+    private $dadosName;
     private $termos;
     private $places;
     private $result;
@@ -69,7 +70,6 @@ class Update extends Conn
             else
                 $this->places = [];
 
-            $this->getSyntax();
             $this->execute();
         }
 
@@ -102,7 +102,6 @@ class Update extends Conn
     public function setPlaces(string $ParseString)
     {
         parse_str($ParseString, $this->places);
-        $this->getSyntax();
         $this->execute();
     }
 
@@ -127,9 +126,11 @@ class Update extends Conn
     //Cria a sintaxe da query para Prepared Statements
     private function getSyntax()
     {
-        foreach ($this->dados as $Key => $Value):
-            $Places[] = $Key . ' = :' . $Key;
-        endforeach;
+        $this->dadosName = [];
+        foreach ($this->dados as $Key => $Value) {
+            $Places[] = "`{$Key}` = :" . str_replace('-', '_', \Helpers\Check::name($Key));
+            $this->dadosName[str_replace('-', '_', \Helpers\Check::name($Key))] = $Value;
+        }
 
         $Places = implode(', ', $Places);
         $this->update = "UPDATE {$this->tabela} SET {$Places} {$this->termos}";
@@ -138,11 +139,15 @@ class Update extends Conn
     //Obtém a Conexão e a Syntax, executa a query!
     private function execute()
     {
+        $this->getSyntax();
         $this->connect();
         try {
-            $this->update->execute(array_merge($this->dados, $this->places));
+            $this->update->execute(array_merge($this->dadosName, $this->places));
             $this->result = true;
 
+            /**
+             * Garante que todos os campos estejam presentes nos dados
+            */
             foreach ($this->resultsUpdates[0] as $col => $value) {
                 if(!isset($this->dados[$col]))
                     $this->dados[$col] = $value;

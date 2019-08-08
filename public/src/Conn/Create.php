@@ -16,6 +16,7 @@ class Create extends Conn
     //teste
     private $tabela;
     private $dados;
+    private $dadosName;
     private $result;
     private $erro;
     private $react;
@@ -88,7 +89,11 @@ class Create extends Conn
     //Cria a sintaxe da query para Prepared Statements
     private function getSyntax()
     {
-        $Fileds = implode(', ', array_keys($this->dados));
+        $Fileds = "`" . implode("`, `", array_keys($this->dados)) . "`";
+        $this->dadosName = [];
+        foreach ($this->dados as $key => $dado)
+            $this->dadosName[str_replace('-', '_', \Helpers\Check::name($key))] = $dado;
+
         $Places = ':' . implode(', :', array_keys($this->dados));
         $this->create = "INSERT INTO {$this->tabela} ({$Fileds}) VALUES ({$Places})";
     }
@@ -98,7 +103,7 @@ class Create extends Conn
     {
         $this->connect();
         try {
-            $this->create->execute($this->dados);
+            $this->create->execute($this->dadosName);
             $this->result = $this->conn->lastInsertId();
             $this->react = new React("create", str_replace(PRE, '', $this->tabela), array_merge(["id" => $this->result], $this->dados));
         } catch (\PDOException $e) {

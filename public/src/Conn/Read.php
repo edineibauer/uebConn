@@ -39,9 +39,9 @@ class Read extends Conn
     {
         if(is_array($select)) {
             $this->select = "";
-            foreach ($select as $item) {
+            foreach ($select as $item)
                 $this->select .= (!empty($this->select) ? ", " : "") . $item;
-            }
+
         } else {
             $this->select = $select;
         }
@@ -57,9 +57,8 @@ class Read extends Conn
     public function exeRead($tabela, $termos = null, $parseString = null)
     {
         $this->setTabela($tabela);
-        if (!empty($parseString)):
+        if (!empty($parseString))
             parse_str($parseString, $this->places);
-        endif;
 
         $this->sql = "SELECT {$this->select} FROM {$this->tabela} {$termos}";
         $this->execute();
@@ -120,9 +119,9 @@ class Read extends Conn
     {
         if ($this->places):
             foreach ($this->places as $Vinculo => $Valor):
-                if ($Vinculo == 'limit' || $Vinculo == 'offset'):
+                if ($Vinculo == 'limit' || $Vinculo == 'offset')
                     $Valor = (int)$Valor;
-                endif;
+
                 $this->read->bindValue(":{$Vinculo}", $Valor, (is_int($Valor) ? \PDO::PARAM_INT : \PDO::PARAM_STR));
             endforeach;
         endif;

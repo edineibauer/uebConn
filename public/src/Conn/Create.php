@@ -55,7 +55,6 @@ class Create extends Conn
         $this->setTabela($tabela);
         $this->dados = $dados;
 
-        $this->getSyntax();
         $this->execute();
     }
 
@@ -101,6 +100,7 @@ class Create extends Conn
     //Obtém a Conexão e a Syntax, executa a query!
     private function execute()
     {
+        $this->getSyntax();
         $this->connect();
         try {
             $this->create->execute($this->dadosName);

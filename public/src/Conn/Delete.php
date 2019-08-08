@@ -62,7 +62,6 @@ class Delete extends Conn
             else
                 $this->places = [];
             
-            $this->getSyntax();
             $this->execute();
         }
     }
@@ -80,7 +79,6 @@ class Delete extends Conn
     public function setPlaces($ParseString)
     {
         parse_str($ParseString, $this->places);
-        $this->getSyntax();
         $this->execute();
     }
 
@@ -111,6 +109,7 @@ class Delete extends Conn
     //Obtém a Conexão e a Syntax, executa a query!
     private function execute()
     {
+        $this->getSyntax();
         $this->Connect();
         try {
             $this->delete->execute($this->places);

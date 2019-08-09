@@ -93,7 +93,7 @@ class Create extends Conn
         foreach ($this->dados as $key => $dado)
             $this->dadosName[str_replace('-', '_', \Helpers\Check::name($key))] = $dado;
 
-        $this->create = "INSERT INTO {$this->tabela} ({$Fileds}) VALUES ({:" . implode(', :', array_keys($this->dadosName)) . "})";
+        $this->create = "INSERT INTO {$this->tabela} ({$Fileds}) VALUES (:" . implode(', :', array_keys($this->dadosName)) . ")";
     }
 
     //Obtém a Conexão e a Syntax, executa a query!

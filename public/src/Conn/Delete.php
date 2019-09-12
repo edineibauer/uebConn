@@ -53,7 +53,7 @@ class Delete extends Conn
         $read = new Read();
         $read->exeRead($tabela, $termos, $parseString);
         if ($read->getResult()) {
-            $this->resultsUpdates = $read->getResult();
+            $this->resultsUpdates = $read->getResult()[0];
             $this->setTabela($tabela);
             $this->termos = (string)$termos;
 
@@ -61,7 +61,7 @@ class Delete extends Conn
                 parse_str($parseString, $this->places);
             else
                 $this->places = [];
-            
+
             $this->execute();
         }
     }

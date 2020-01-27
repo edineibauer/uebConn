@@ -114,7 +114,7 @@ class Delete extends Conn
         try {
             $this->delete->execute($this->places);
             $this->result = true;
-            $this->react = new React("delete", str_replace(PRE, '', $this->tabela), $this->resultsUpdates, $this->resultsUpdates);
+            $this->react = new React("delete", str_replace(PRE, '', $this->tabela), $this->resultsUpdates[0], $this->resultsUpdates[0]);
         } catch (\PDOException $e) {
             $this->result = null;
             $this->erro = "<b>Erro ao Deletar:</b> {$e->getMessage()}";

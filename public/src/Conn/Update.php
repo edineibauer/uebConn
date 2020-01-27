@@ -153,7 +153,7 @@ class Update extends Conn
                     $this->dados[$col] = $value;
             }
 
-            $this->react = new React("update", str_replace(PRE, '', $this->tabela), $this->dados, $this->resultsUpdates);
+            $this->react = new React("update", str_replace(PRE, '', $this->tabela), $this->dados, $this->resultsUpdates[0]);
         } catch (\PDOException $e) {
             $this->result = null;
             $this->erro = "<b>(Update) Erro ao Ler: ({$this->tabela})</b> {$e->getMessage()}";

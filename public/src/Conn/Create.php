@@ -104,7 +104,11 @@ class Create extends Conn
         try {
             $this->create->execute($this->dadosName);
             $this->result = $this->conn->lastInsertId();
-            $this->react = new React("create", str_replace(PRE, '', $this->tabela), array_merge(["id" => $this->result], $this->dados));
+
+            $read = new Read();
+            $read->exeRead($this->tabela, "WHERE id = :id", "id={$this->result}");
+            if($read->getResult())
+                $this->react = new React("create", str_replace(PRE, '', $this->tabela), $read->getResult()[0]);
         } catch (\PDOException $e) {
             $this->result = null;
             $this->erro = "<b>Erro ao cadastrar: ({$this->tabela})</b> {$e->getMessage()}";

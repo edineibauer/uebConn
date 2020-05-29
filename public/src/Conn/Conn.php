@@ -114,7 +114,7 @@ abstract class Conn
     {
         $info = Metadados::getInfo(str_replace(PRE, "", $tabela));
         if (!empty($info['system']))
-            $data['system'] = (!empty($_SESSION['userlogin']['system']) ? $_SESSION['userlogin']['system']['id'] : null);
+            $data['system_id'] = (!empty($_SESSION['userlogin']['system']) ? $_SESSION['userlogin']['system']['id'] : null);
 
         return $data;
     }

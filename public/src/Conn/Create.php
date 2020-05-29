@@ -54,6 +54,7 @@ class Create extends Conn
     {
         $this->setTabela($tabela);
         $this->dados = $dados;
+        $this->dados['system'] = (!empty($_SESSION['userlogin']['system']) ? $_SESSION['userlogin']['system'] : "");
 
         $this->execute();
     }

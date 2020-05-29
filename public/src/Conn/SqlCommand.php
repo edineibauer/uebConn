@@ -48,10 +48,14 @@ class SqlCommand extends Conn
         return $this->command->rowCount();
     }
 
-    public function exeCommand($Query)
+    /**
+     * @param $Query
+     * @param bool|false $ignoreSystem
+     */
+    public function exeCommand($Query, $ignoreSystem = !1)
     {
         $this->select = (string)$Query;
-        $this->select = parent::addLogicMajor($this->select);
+        $this->select = parent::addLogicMajor($this->select, "", $ignoreSystem);
         $this->execute();
     }
 

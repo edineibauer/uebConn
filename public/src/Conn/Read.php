@@ -54,13 +54,13 @@ class Read extends Conn
      * @param STRING $termos = WHERE | ORDER | LIMIT :limit | OFFSET :offset
      * @param STRING $parseString = link={$link}&link2={$link2}
      */
-    public function exeRead($tabela, $termos = null, $parseString = null)
+    public function exeRead($tabela, $termos = null, $parseString = null, $ignoreSystem = !1)
     {
         $this->setTabela($tabela);
         if (!empty($parseString))
             parse_str($parseString, $this->places);
 
-        $termos = parent::addLogicMajor($termos ?? "", $this->tabela);
+        $termos = parent::addLogicMajor($termos ?? "", $this->tabela, $ignoreSystem);
 
         $this->sql = "SELECT {$this->select} FROM {$this->tabela} {$termos}";
         $this->execute();

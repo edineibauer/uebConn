@@ -109,11 +109,12 @@ abstract class Conn
      * Aplica clausula WHERE padrão para consultas no banco
      * @param string $queryCommand
      * @param string|null $tabela
+     * @param bool|false $ignoreSystem
      * @return string
      */
-    protected static function addLogicMajor(string $queryCommand, string $tabela = ""): string
+    protected static function addLogicMajor(string $queryCommand, string $tabela = "", bool $ignoreSystem = !1): string
     {
-        if (!empty($_SESSION['userlogin']['setor']) && $_SESSION['userlogin']['setor'] === "admin")
+        if ($ignoreSystem || (!empty($_SESSION['userlogin']['setor']) && $_SESSION['userlogin']['setor'] === "admin"))
             return $queryCommand;
 
         $system = "system_id";

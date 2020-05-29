@@ -159,9 +159,9 @@ abstract class Conn
                 }
 
                 if (isset($command) && !empty($query[1])) {
-                    $queryCommand = $query[0] . " WHERE (" . (empty($_SESSION['userlogin']['system']) ? "{$system} IS NULL || {$system} = ''" : "{$system} = '{$_SESSION['userlogin']['system']}'") . ")" . ($command === "WHERE " ? " && " : $command) . $query[1];
+                    $queryCommand = $query[0] . " WHERE ({$system} IS NULL || {$system} = ''" . (empty($_SESSION['userlogin']['system']) ? "" : " || {$system} = '{$_SESSION['userlogin']['system']}'") . ")" . ($command === "WHERE " ? " && " : $command) . $query[1];
                 } else {
-                    $queryCommand .= " WHERE (" . (empty($_SESSION['userlogin']['system']) ? "{$system} IS NULL || {$system} = ''" : "{$system} = '{$_SESSION['userlogin']['system']}'") . ")";
+                    $queryCommand .= " WHERE ({$system} IS NULL || {$system} = ''" . (empty($_SESSION['userlogin']['system']) ? "" : " || {$system} = '{$_SESSION['userlogin']['system']}'") . ")";
                 }
             }
         }

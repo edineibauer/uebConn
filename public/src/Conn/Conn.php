@@ -10,6 +10,8 @@
 
 namespace Conn;
 
+use Entity\Metadados;
+
 abstract class Conn
 {
     private static $host = HOST ?? null;
@@ -56,7 +58,7 @@ abstract class Conn
     /**
      * @return string
      */
-    protected static function getDatabase() :string
+    protected static function getDatabase(): string
     {
         return self::$database;
     }
@@ -101,5 +103,83 @@ abstract class Conn
         $color = ["blue" => "lightskyblue", "yellow" => "gold", "green" => "steal", "red" => "lightcoral", "orange" => "orange"];
         $background = ($ErrNo == E_USER_NOTICE ? $color["blue"] : ($ErrNo == E_USER_WARNING ? $color['yellow'] : ($ErrNo == E_USER_ERROR ? $color['red'] : $color['orange'])));
         echo "<p style='width: 100%;float:left;clear:both; padding:10px 30px; background: {$background}; border-radius: 4px; font-weight: bold; box-shadow: 1px 4px 9px -2px rgba(0, 0, 0, 0.15); text-transform: uppercase; width: auto' >{$ErrMsg}</p>";
+    }
+
+    /**
+     * @param string $tabela
+     * @param array $data
+     * @return array
+     */
+    protected static function addSystemField(string $tabela, array $data = []): array
+    {
+        $info = Metadados::getInfo(str_replace(PRE, "", $tabela));
+        if (!empty($info['system']))
+            $data['system'] = (!empty($_SESSION['userlogin']['system']) ? $_SESSION['userlogin']['system']['id'] : null);
+
+        return $data;
+    }
+
+    /**
+     * Aplica clausula WHERE padrão para consultas no banco
+     * @param string $queryCommand
+     * @param string|null $tabela
+     * @return string
+     */
+    protected static function addLogicMajor(string $queryCommand, string $tabela = ""): string
+    {
+        if ($_SESSION['userlogin']['setor'] === "admin")
+            return $queryCommand;
+
+        $system = "system";
+        if (empty($tabela)) {
+            $from = explode("FROM ", $queryCommand);
+            if (!empty($from[1])) {
+                $tabela = explode(" ", $from[1])[0];
+
+                if (!empty($tabela) && preg_match("/FROM {$tabela} as /i", $queryCommand))
+                    $system = explode(" ", explode("FROM {$tabela} as ", $queryCommand)[1])[0] . ".system";
+            }
+        }
+
+        /**
+         * Se tiver tabela reconhecida
+         */
+        if (!empty($tabela)) {
+            $info = Metadados::getInfo(str_replace(PRE, "", $tabela));
+            if (!empty($info['system'])) {
+                if (preg_match("/WHERE /i", $queryCommand)) {
+                    $command = "WHERE ";
+                    $query = explode($command, $queryCommand);
+
+                } elseif (preg_match("/ GROUP BY /i", $queryCommand)) {
+                    $command = " GROUP BY ";
+                    $query = explode($command, $queryCommand);
+
+                } elseif (preg_match("/ HAVING /i", $queryCommand)) {
+                    $command = " HAVING ";
+                    $query = explode($command, $queryCommand);
+
+                } elseif (preg_match("/ ORDER BY /i", $queryCommand)) {
+                    $command = " ORDER BY ";
+                    $query = explode($command, $queryCommand);
+
+                } elseif (preg_match("/ LIMIT /i", $queryCommand)) {
+                    $command = " LIMIT ";
+                    $query = explode($command, $queryCommand);
+
+                } elseif (preg_match("/ OFFSET /i", $queryCommand)) {
+                    $command = " OFFSET ";
+                    $query = explode($command, $queryCommand);
+                }
+
+                if (isset($command) && !empty($query[1])) {
+                    $queryCommand = $query[0] . " WHERE (" . (empty($_SESSION['userlogin']['system']) ? "{$system} IS NULL || {$system} = ''" : "{$system} = '{$_SESSION['userlogin']['system']}'") . ")" . ($command === "WHERE " ? " && " : $command) . $query[1];
+                } else {
+                    $queryCommand .= " WHERE (" . (empty($_SESSION['userlogin']['system']) ? "{$system} IS NULL || {$system} = ''" : "{$system} = '{$_SESSION['userlogin']['system']}'") . ")";
+                }
+            }
+        }
+
+        return $queryCommand;
     }
 }

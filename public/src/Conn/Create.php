@@ -53,8 +53,7 @@ class Create extends Conn
     public function exeCreate($tabela, array $dados)
     {
         $this->setTabela($tabela);
-        $this->dados = $dados;
-        $this->dados['system'] = (!empty($_SESSION['userlogin']['system']) ? $_SESSION['userlogin']['system'] : "");
+        $this->dados = parent::addSystemField($this->tabela, $dados);
 
         $this->execute();
     }

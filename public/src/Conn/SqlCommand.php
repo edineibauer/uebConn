@@ -13,7 +13,6 @@ class SqlCommand extends Conn
     private $select;
     private $places;
     private $result;
-    private $tabela;
     private $erro;
 
     /** @var PDOStatement */
@@ -52,6 +51,7 @@ class SqlCommand extends Conn
     public function exeCommand($Query)
     {
         $this->select = (string)$Query;
+        $this->select = parent::addLogicMajor($this->select);
         $this->execute();
     }
 
@@ -72,6 +72,7 @@ class SqlCommand extends Conn
      * *********** PRIVATE METHODS ************
      * ****************************************
      */
+
     //Obtém o PDO e Prepara a query
     private function connect()
     {

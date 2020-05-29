@@ -60,6 +60,8 @@ class Read extends Conn
         if (!empty($parseString))
             parse_str($parseString, $this->places);
 
+        $termos = parent::addLogicMajor($termos, $this->tabela);
+
         $this->sql = "SELECT {$this->select} FROM {$this->tabela} {$termos}";
         $this->execute();
     }

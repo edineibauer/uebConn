@@ -106,20 +106,6 @@ abstract class Conn
     }
 
     /**
-     * @param string $tabela
-     * @param array $data
-     * @return array
-     */
-    protected static function addSystemField(string $tabela, array $data = []): array
-    {
-        $info = Metadados::getInfo(str_replace(PRE, "", $tabela));
-        if (!empty($info['system']))
-            $data['system_id'] = (!empty($_SESSION['userlogin']['system']) ? $_SESSION['userlogin']['system']['id'] : null);
-
-        return $data;
-    }
-
-    /**
      * Aplica clausula WHERE padrão para consultas no banco
      * @param string $queryCommand
      * @param string|null $tabela
@@ -127,17 +113,17 @@ abstract class Conn
      */
     protected static function addLogicMajor(string $queryCommand, string $tabela = ""): string
     {
-        if ($_SESSION['userlogin']['setor'] === "admin")
+        if (!empty($_SESSION['userlogin']['setor']) && $_SESSION['userlogin']['setor'] === "admin")
             return $queryCommand;
 
-        $system = "system";
+        $system = "system_id";
         if (empty($tabela)) {
             $from = explode("FROM ", $queryCommand);
             if (!empty($from[1])) {
                 $tabela = explode(" ", $from[1])[0];
 
                 if (!empty($tabela) && preg_match("/FROM {$tabela} as /i", $queryCommand))
-                    $system = explode(" ", explode("FROM {$tabela} as ", $queryCommand)[1])[0] . ".system";
+                    $system = explode(" ", explode("FROM {$tabela} as ", $queryCommand)[1])[0] . ".system_id";
             }
         }
 

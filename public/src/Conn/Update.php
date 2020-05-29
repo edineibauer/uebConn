@@ -63,7 +63,9 @@ class Update extends Conn
             $this->resultsUpdates = $read->getResult();
             $this->setTabela($tabela);
 
-            $this->dados = parent::addSystemField($this->tabela, $dados);
+            $this->dados = $dados;
+            $this->dados['system_id'] = (!empty($_SESSION['userlogin']['system']['id']) ? $_SESSION['userlogin']['system']['id'] : null);
+
             $this->termos = (string)$termos;
 
             if (!empty($parseString))

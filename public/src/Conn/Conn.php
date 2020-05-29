@@ -132,8 +132,10 @@ abstract class Conn
          * Se tiver tabela reconhecida
          */
         if (!empty($tabela)) {
+            $info = Metadados::getInfo(str_replace(PRE, "", $tabela));
+
             $whereSetor = "";
-            if (!empty($info['setor']) && !empty($_SESSION['userlogin']['setor']))
+            if (!empty($info['setor']) && !empty($_SESSION['userlogin']['setor']) && $_SESSION['userlogin']['setor'] !== "admin")
                 $whereSetor = " {$info['setor']} = '{$_SESSION['userlogin']['setor']}'";
 
             if (!empty($info['system']) || !empty($whereSetor)) {

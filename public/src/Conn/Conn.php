@@ -132,8 +132,11 @@ abstract class Conn
          * Se tiver tabela reconhecida
          */
         if (!empty($tabela)) {
-            $info = Metadados::getInfo(str_replace(PRE, "", $tabela));
-            if (!empty($info['system'])) {
+            $whereSetor = "";
+            if (!empty($info['setor']) && !empty($_SESSION['userlogin']['setor']))
+                $whereSetor = " {$info['setor']} = '{$_SESSION['userlogin']['setor']}'";
+
+            if (!empty($info['system']) || !empty($whereSetor)) {
                 if (preg_match("/WHERE /i", $queryCommand)) {
                     $command = "WHERE ";
                     $query = explode($command, $queryCommand);
@@ -159,10 +162,19 @@ abstract class Conn
                     $query = explode($command, $queryCommand);
                 }
 
-                if (isset($command) && !empty($query[1])) {
-                    $queryCommand = $query[0] . " WHERE ({$system} IS NULL || {$system} = ''" . (empty($_SESSION['userlogin']['system_id']) ? "" : " || {$system} = '{$_SESSION['userlogin']['system_id']}'") . ")" . ($command === "WHERE " ? " && " : $command) . $query[1];
+                if(!empty($info['system'])) {
+                    $whereSetor .= (!empty($whereSetor) ? " && " : "");
+                    if (isset($command) && !empty($query[1])) {
+                        $queryCommand = $query[0] . " WHERE{$whereSetor} ({$system} IS NULL || {$system} = ''" . (empty($_SESSION['userlogin']['system_id']) ? "" : " || {$system} = '{$_SESSION['userlogin']['system_id']}'") . ")" . ($command === "WHERE " ? " && " : $command) . $query[1];
+                    } else {
+                        $queryCommand .= " WHERE{$whereSetor} ({$system} IS NULL || {$system} = ''" . (empty($_SESSION['userlogin']['system_id']) ? "" : " || {$system} = '{$_SESSION['userlogin']['system_id']}'") . ")";
+                    }
                 } else {
-                    $queryCommand .= " WHERE ({$system} IS NULL || {$system} = ''" . (empty($_SESSION['userlogin']['system_id']) ? "" : " || {$system} = '{$_SESSION['userlogin']['system_id']}'") . ")";
+                    if (isset($command) && !empty($query[1])) {
+                        $queryCommand = $query[0] . " WHERE{$whereSetor}" . ($command === "WHERE " ? " && " : $command) . $query[1];
+                    } else {
+                        $queryCommand .= " WHERE{$whereSetor}";
+                    }
                 }
             }
         }

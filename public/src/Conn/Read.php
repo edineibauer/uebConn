@@ -65,7 +65,7 @@ class Read extends Conn
         $info = Metadados::getInfo(str_replace(PRE, "", $this->tabela));
         $termos = parent::addLogicMajor($termos ?? "", $this->tabela, $info, $ignoreSystem);
 
-        if(!empty($info['password']) && $this->select === "*")
+        if(!empty($info['password']) && $this->select === "*" && !empty($info['columns_readable']))
             $this->select = implode(", ", $info['columns_readable']);
 
         $this->sql = "SELECT {$this->select} FROM {$this->tabela} {$termos}";

@@ -70,6 +70,8 @@ class Read extends Conn
 
         $this->sql = "SELECT {$this->select} FROM {$this->tabela} {$termos}";
         $this->execute();
+
+        $this->select = "*";
     }
 
     /**

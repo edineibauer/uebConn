@@ -107,12 +107,14 @@ abstract class Conn
 
     /**
      * Aplica clausula WHERE padrão para consultas no banco
+     *
      * @param string $queryCommand
-     * @param string|null $tabela
-     * @param bool|false $ignoreSystem
+     * @param string $tabela
+     * @param array $info
+     * @param bool $ignoreSystem
      * @return string
      */
-    protected static function addLogicMajor(string $queryCommand, string $tabela = "", bool $ignoreSystem = !1): string
+    protected static function addLogicMajor(string $queryCommand, string $tabela = "", array $info = [], bool $ignoreSystem = !1): string
     {
         if ($ignoreSystem || (!empty($_SESSION['userlogin']['setor']) && $_SESSION['userlogin']['setor'] === "admin"))
             return $queryCommand;
@@ -132,7 +134,8 @@ abstract class Conn
          * Se tiver tabela reconhecida
          */
         if (!empty($tabela)) {
-            $info = Metadados::getInfo(str_replace(PRE, "", $tabela));
+            if(empty($info))
+                $info = Metadados::getInfo(str_replace(PRE, "", $tabela));
 
             $whereSetor = "";
             if (!empty($info['setor']) && !empty($_SESSION['userlogin']['setor']) && $_SESSION['userlogin']['setor'] !== "admin")

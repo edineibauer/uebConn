@@ -9,6 +9,8 @@
 
 namespace Conn;
 
+use Entity\Metadados;
+
 class Read extends Conn
 {
     private $sql;
@@ -60,7 +62,11 @@ class Read extends Conn
         if (!empty($parseString))
             parse_str($parseString, $this->places);
 
-        $termos = parent::addLogicMajor($termos ?? "", $this->tabela, $ignoreSystem);
+        $info = Metadados::getInfo(str_replace(PRE, "", $this->tabela));
+        $termos = parent::addLogicMajor($termos ?? "", $this->tabela, $info, $ignoreSystem);
+
+        if(!empty($info['password']) && $this->select === "*")
+            $this->select = implode(", ", $info['columns_readable']);
 
         $this->sql = "SELECT {$this->select} FROM {$this->tabela} {$termos}";
         $this->execute();

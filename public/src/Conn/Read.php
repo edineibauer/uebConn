@@ -55,15 +55,16 @@ class Read extends Conn
      * @param STRING $tabela = Nome da tabela
      * @param STRING $termos = WHERE | ORDER | LIMIT :limit | OFFSET :offset
      * @param STRING $parseString = link={$link}&link2={$link2}
+     * @param bool|null $ignoreSystem
      */
-    public function exeRead($tabela, $termos = null, $parseString = null, $ignoreSystem = !1)
+    public function exeRead($tabela, $termos = null, $parseString = null, $ignoreSystem = null)
     {
         $this->setTabela($tabela);
         if (!empty($parseString))
             parse_str($parseString, $this->places);
 
         $info = Metadados::getInfo(str_replace(PRE, "", $this->tabela));
-        $termos = parent::addLogicMajor($termos ?? "", $this->tabela, $info, $ignoreSystem);
+        $termos = parent::addLogicMajor($termos ?? "", $this->tabela, $info, $ignoreSystem !== null);
 
         if(!empty($info['password']) && $this->select === "*" && !empty($info['columns_readable']))
             $this->select = implode(", ", $info['columns_readable']);

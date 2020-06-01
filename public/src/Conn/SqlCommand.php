@@ -50,11 +50,11 @@ class SqlCommand extends Conn
 
     /**
      * @param $Query
-     * @param bool|false $ignoreSystem
+     * @param bool|null $ignoreSystem
      */
-    public function exeCommand($Query, $ignoreSystem = !1)
+    public function exeCommand($Query, $ignoreSystem = null)
     {
-        $this->select = parent::addLogicMajor((string)$Query, "", [], $ignoreSystem);
+        $this->select = parent::addLogicMajor((string)$Query, "", [], $ignoreSystem !== null);
         $this->execute();
     }
 

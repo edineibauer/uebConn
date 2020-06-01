@@ -67,7 +67,7 @@ class Read extends Conn
         $termos = parent::addLogicMajor($termos ?? "", $this->tabela, $info, $ignoreSystem !== null);
 
         if(!empty($info['password']) && $this->select === "*" && !empty($info['columns_readable']))
-            $this->select = implode(", ", $info['columns_readable']);
+            $this->select = implode(", ", $info['columns_readable']) . ($info['user'] === 1 ? ", usuarios_id" : ""). ($info['autor'] === 1 ? ", autorpub" : ""). ($info['autor'] === 2 ? ", ownerpub" : "");
 
         $this->sql = "SELECT {$this->select} FROM {$this->tabela} {$termos}";
         $this->execute();

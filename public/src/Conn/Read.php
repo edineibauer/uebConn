@@ -18,7 +18,6 @@ class Read extends Conn
     private $places;
     private $result;
     private $tabela;
-    private $erro;
 
     /** @var PDOStatement */
     private $read;
@@ -31,7 +30,7 @@ class Read extends Conn
      */
     public function getErro()
     {
-        return $this->erro;
+        return self::getError();
     }
 
     /**
@@ -149,7 +148,7 @@ class Read extends Conn
 
         } catch (\PDOException $e) {
             $this->result = null;
-            $this->erro = "<b>Erro ao Ler: ({$this->tabela})</b> {$e->getMessage()}";
+            self::setError("<b>Erro ao Ler: ({$this->tabela})</b> {$e->getMessage()}");
         }
 
         parent::setDefault();

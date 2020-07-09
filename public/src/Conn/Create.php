@@ -18,7 +18,6 @@ class Create extends Conn
     private $dados;
     private $dadosName;
     private $result;
-    private $erro;
     private $react;
 
     /** @var PDOStatement */
@@ -32,7 +31,7 @@ class Create extends Conn
      */
     public function getErro()
     {
-        return $this->erro;
+        return self::getError();
     }
 
     /**
@@ -112,7 +111,7 @@ class Create extends Conn
                 $this->react = new React("create", str_replace(PRE, '', $this->tabela), $read->getResult()[0]);
         } catch (\PDOException $e) {
             $this->result = null;
-            $this->erro = "<b>Erro ao cadastrar: ({$this->tabela})</b> {$e->getMessage()}";
+            self::setError("<b>Erro ao cadastrar: ({$this->tabela})</b> {$e->getMessage()}");
         }
 
         parent::setDefault();

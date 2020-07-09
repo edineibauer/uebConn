@@ -11,6 +11,7 @@
 namespace Conn;
 
 use Entity\Metadados;
+use Config\Config;
 
 abstract class Conn
 {
@@ -18,6 +19,7 @@ abstract class Conn
     private static $user = USER ?? null;
     private static $pass = PASS ?? null;
     private static $database = DATABASE ?? null;
+    private static $error = "";
 
     /** @var PDO */
     private static $connect = null;
@@ -53,6 +55,21 @@ abstract class Conn
     public static function setUser(string $user)
     {
         self::$user = $user;
+    }
+
+    /**
+     * @param string $error
+     * @return string
+     */
+    public static function setError(string $error): string {
+        self::$error = $error;
+    }
+
+    /**
+     * @return string
+     */
+    public static function getError(): string {
+        return self::$error;
     }
 
     /**
@@ -96,6 +113,7 @@ abstract class Conn
         self::setHost(HOST ?? null);
         self::setUser(USER ?? null);
         self::setPass(PASS ?? null);
+        self::setError("");
     }
 
     protected static function error($ErrMsg, $ErrNo = null)
@@ -116,9 +134,18 @@ abstract class Conn
      */
     protected static function addLogicMajor(string $queryCommand, string $tabela = "", array $info = [], bool $ignoreSystem = !1): string
     {
-        if ($ignoreSystem || (!empty($_SESSION['userlogin']['setor']) && $_SESSION['userlogin']['setor'] === "admin"))
+        /**
+         * Not apply logic user when
+         * is admin
+         * not is setted a user
+         * is explicit ignored
+         */
+        if ($ignoreSystem || empty($_SESSION['userlogin']) || (empty($_SESSION['userlogin']['setor']) && $_SESSION['userlogin']['setor'] != 0) || $_SESSION['userlogin']['setor'] === "admin")
             return $queryCommand;
 
+        /**
+         * SqlCommand not send the table, so search for it
+         */
         $system = "system_id";
         if (empty($tabela)) {
             $from = explode("FROM ", $queryCommand);
@@ -131,6 +158,15 @@ abstract class Conn
         }
 
         /**
+         * Check for read permission to this user
+         */
+        $permissoes = Config::getPermission();
+        if(isset($permissoes[$_SESSION['userlogin']['setor']][$tabela]['read']) && !$permissoes[$_SESSION['userlogin']['setor']][$tabela]['read']) {
+            self::$error = $_SESSION['userlogin']['setor'] . " não tem permissão de leitura em " . $tabela;
+            return (empty($tabela) ? "SELECT * FROM " . PRE . $tabela . " " : "") . "WHERE id < 0";
+        }
+
+        /**
          * Se tiver tabela reconhecida
          */
         if (!empty($tabela)) {
@@ -138,8 +174,18 @@ abstract class Conn
                 $info = Metadados::getInfo(str_replace(PRE, "", $tabela));
 
             $whereSetor = "";
-            if (!empty($info['setor']) && !empty($_SESSION['userlogin']['setor']) && $_SESSION['userlogin']['setor'] !== "admin")
+
+            /**
+             * where register setor like my setor
+             */
+            if (!empty($info['setor']))
                 $whereSetor = " {$info['setor']} = '{$_SESSION['userlogin']['setor']}'";
+
+            /**
+             * where register owner like me
+             */
+            if(!empty($info['autor']) && $info['autor'] === 2)
+                $whereSetor .= (empty($whereSetor) ? "" : " && ") . " ownerpub = '{$_SESSION['userlogin']['id']}'";
 
             if (!empty($info['system']) || !empty($whereSetor)) {
                 if (preg_match("/WHERE /i", $queryCommand)) {

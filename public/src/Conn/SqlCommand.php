@@ -13,7 +13,6 @@ class SqlCommand extends Conn
     private $select;
     private $places;
     private $result;
-    private $erro;
 
     /** @var PDOStatement */
     private $command;
@@ -26,7 +25,7 @@ class SqlCommand extends Conn
      */
     public function getErro()
     {
-        return $this->erro;
+        return self::getError();
     }
 
     /**
@@ -110,7 +109,7 @@ class SqlCommand extends Conn
 
         } catch (\PDOException $e) {
             $this->result = "<b>Erro ao Executar Comando: </b> {$e->getMessage()}";
-            $this->erro = "<b>Erro ao Executar Comando</b> {$e->getMessage()}";
+            self::setError("<b>Erro ao Executar Comando</b> {$e->getMessage()}");
         }
 
         parent::setDefault();

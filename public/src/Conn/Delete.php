@@ -17,7 +17,6 @@ class Delete extends Conn
     private $termos;
     private $places;
     private $result;
-    private $erro;
     private $react;
     private $resultsUpdates;
 
@@ -32,7 +31,7 @@ class Delete extends Conn
      */
     public function getErro()
     {
-        return $this->erro;
+        return self::getError();
     }
 
     /**
@@ -117,7 +116,7 @@ class Delete extends Conn
             $this->react = new React("delete", str_replace(PRE, '', $this->tabela), $this->resultsUpdates[0] ?? [], $this->resultsUpdates[0] ?? []);
         } catch (\PDOException $e) {
             $this->result = null;
-            $this->erro = "<b>Erro ao Deletar:</b> {$e->getMessage()}";
+            self::setError("<b>Erro ao Deletar:</b> {$e->getMessage()}");
         }
 
         parent::setDefault();

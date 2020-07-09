@@ -61,7 +61,7 @@ abstract class Conn
      * @param string $error
      * @return string
      */
-    public static function setError(string $error): string {
+    public static function setError(string $error) {
         self::$error = $error;
     }
 

@@ -18,12 +18,22 @@ class Read extends Conn
     private $places;
     private $result;
     private $tabela;
+    private $ignoreSystem;
 
     /** @var PDOStatement */
     private $read;
 
     /** @var PDO */
     private $conn;
+
+    /**
+     * Read constructor.
+     * @param bool $ignoreSystem
+     */
+    public function __construct(bool $ignoreSystem = false)
+    {
+        $this->ignoreSystem = $ignoreSystem;
+    }
 
     /**
      * @return mixed
@@ -63,7 +73,7 @@ class Read extends Conn
             parse_str($parseString, $this->places);
 
         $info = Metadados::getInfo(str_replace(PRE, "", $this->tabela));
-        $termos = parent::addLogicMajor($termos ?? "", $this->tabela, $info, $ignoreSystem !== null);
+        $termos = parent::addLogicMajor($termos ?? "", $this->tabela, $info, $this->ignoreSystem || $ignoreSystem !== null);
 
         if(!empty($info['password']) && $this->select === "*" && !empty($info['columns_readable']))
             $this->select = implode(", ", $info['columns_readable']) . ($info['user'] === 1 ? ", usuarios_id" : ""). ($info['autor'] === 1 ? ", autorpub" : ""). ($info['autor'] === 2 ? ", ownerpub" : "");

@@ -13,12 +13,18 @@ class SqlCommand extends Conn
     private $select;
     private $places;
     private $result;
+    private $ignoreSystem;
 
     /** @var PDOStatement */
     private $command;
 
     /** @var PDO */
     private $conn;
+
+    public function __construct(bool $ignoreSystem = false)
+    {
+        $this->ignoreSystem = $ignoreSystem;
+    }
 
     /**
      * @return mixed
@@ -53,7 +59,7 @@ class SqlCommand extends Conn
      */
     public function exeCommand($Query, $ignoreSystem = null)
     {
-        $this->select = parent::addLogicMajor((string)$Query, "", [], $ignoreSystem !== null);
+        $this->select = parent::addLogicMajor((string)$Query, "", [], $this->ignoreSystem || $ignoreSystem !== null);
         $this->execute();
     }
 

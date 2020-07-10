@@ -103,6 +103,7 @@ abstract class Conn
     /** Retorna um objeto PDO Singleton Pattern. */
     protected static function getConn()
     {
+        self::setError("");
         return self::conectar();
     }
 
@@ -112,7 +113,6 @@ abstract class Conn
         self::setHost(HOST ?? null);
         self::setUser(USER ?? null);
         self::setPass(PASS ?? null);
-        self::setError("");
     }
 
     protected static function error($ErrMsg, $ErrNo = null)

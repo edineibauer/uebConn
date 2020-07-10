@@ -53,8 +53,8 @@ class Read extends Conn
             foreach ($select as $item)
                 $this->select .= (!empty($this->select) ? ", " : "") . $item;
 
-        } else {
-            $this->select = $select;
+        } elseif(is_string($select)) {
+            $this->select = str_replace("SELECT ", "", $select);
         }
     }
 

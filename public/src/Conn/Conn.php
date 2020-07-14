@@ -189,27 +189,27 @@ abstract class Conn
             if (!empty($info['system']) || !empty($whereSetor)) {
                 if (preg_match("/WHERE /i", $queryCommand)) {
                     $command = "WHERE ";
-                    $query = explode($command, $queryCommand);
+                    $query = explode($command, $queryCommand, 2);
 
                 } elseif (preg_match("/ GROUP BY /i", $queryCommand)) {
                     $command = " GROUP BY ";
-                    $query = explode($command, $queryCommand);
+                    $query = explode($command, $queryCommand, 2);
 
                 } elseif (preg_match("/ HAVING /i", $queryCommand)) {
                     $command = " HAVING ";
-                    $query = explode($command, $queryCommand);
+                    $query = explode($command, $queryCommand, 2);
 
                 } elseif (preg_match("/ ORDER BY /i", $queryCommand)) {
                     $command = " ORDER BY ";
-                    $query = explode($command, $queryCommand);
+                    $query = explode($command, $queryCommand, 2);
 
                 } elseif (preg_match("/ LIMIT /i", $queryCommand)) {
                     $command = " LIMIT ";
-                    $query = explode($command, $queryCommand);
+                    $query = explode($command, $queryCommand, 2);
 
                 } elseif (preg_match("/ OFFSET /i", $queryCommand)) {
                     $command = " OFFSET ";
-                    $query = explode($command, $queryCommand);
+                    $query = explode($command, $queryCommand, 2);
                 }
 
                 if(!empty($info['system'])) {

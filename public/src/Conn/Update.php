@@ -57,7 +57,7 @@ class Update extends Conn
     public function exeUpdate(string $tabela, array $dados, string $termos, $parseString = null)
     {
         $read = new Read();
-        $read->exeRead($tabela, $termos, $parseString);
+        $read->exeRead($tabela, $termos, $parseString, !0);
         if($read->getResult()) {
             $this->resultsUpdates = $read->getResult();
             $this->setTabela($tabela);

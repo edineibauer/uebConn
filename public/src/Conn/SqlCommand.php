@@ -59,19 +59,11 @@ class SqlCommand extends Conn
      */
     public function exeCommand($Query, $ignoreSystem = null)
     {
-        $this->select = parent::addLogicMajor((string)$Query, "", [], $this->ignoreSystem || $ignoreSystem !== null);
-        $this->execute();
-    }
+        $ignoreOwnerpub = preg_match("/ownerpub/i", $Query);
+        if($ignoreSystem === null && preg_match("/system_id/i", $Query))
+            $ignoreSystem = 1;
 
-    /**
-     * <b>Full Read:</b> Executa leitura de dados via query que deve ser montada manualmente para possibilitar
-     * seleção de multiplas tabelas em uma única query!
-     * @param STRING $Query = Query Select Syntax
-     * @param STRING $ParseString = link={$link}&link2={$link2}
-     */
-    public function setPlaces($ParseString)
-    {
-        parse_str($ParseString, $this->places);
+        $this->select = parent::addLogicMajor((string)$Query, "", [], $this->ignoreSystem || $ignoreSystem !== null, $ignoreOwnerpub);
         $this->execute();
     }
 
@@ -89,25 +81,11 @@ class SqlCommand extends Conn
         $this->command->setFetchMode(\PDO::FETCH_ASSOC);
     }
 
-    //Cria a sintaxe da query para Prepared Statements
-    private function getSyntax()
-    {
-        if ($this->places):
-            foreach ($this->places as $Vinculo => $Valor):
-                if ($Vinculo == 'limit' || $Vinculo == 'offset'):
-                    $Valor = (int)$Valor;
-                endif;
-                $this->command->bindValue(":{$Vinculo}", $Valor, (is_int($Valor) ? \PDO::PARAM_INT : \PDO::PARAM_STR));
-            endforeach;
-        endif;
-    }
-
     //Obtém a Conexão e a Syntax, executa a query!
     private function execute()
     {
         $this->connect();
         try {
-            $this->getSyntax();
             $this->command->execute();
 
             if (preg_match('/^(SELECT|SHOW) /i', $this->select))

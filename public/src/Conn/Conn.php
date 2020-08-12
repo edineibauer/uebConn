@@ -129,9 +129,10 @@ abstract class Conn
      * @param string $tabela
      * @param array $info
      * @param bool $ignoreSystem
+     * @param bool $ignoreOwnerpub
      * @return string
      */
-    protected static function addLogicMajor(string $queryCommand, string $tabela = "", array $info = [], bool $ignoreSystem = !1): string
+    protected static function addLogicMajor(string $queryCommand, string $tabela = "", array $info = [], bool $ignoreSystem = !1, bool $ignoreOwnerpub = !1): string
     {
         /**
          * Not apply logic user when
@@ -183,7 +184,7 @@ abstract class Conn
             /**
              * where register owner like me
              */
-            if(!empty($info['autor']) && $info['autor'] === 2)
+            if(!$ignoreOwnerpub && !empty($info['autor']) && $info['autor'] === 2)
                 $whereSetor .= (empty($whereSetor) ? "" : " && ") . " ownerpub = '{$_SESSION['userlogin']['id']}'";
 
             if (!empty($info['system']) || !empty($whereSetor)) {

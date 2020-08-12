@@ -68,12 +68,16 @@ class Read extends Conn
      */
     public function exeRead($tabela, $termos = null, $parseString = null, $ignoreSystem = null)
     {
+        $ignoreOwnerpub = preg_match("/ownerpub/i", $termos);
+        if($ignoreSystem === null && preg_match("/system_id/i", $termos))
+            $ignoreSystem = 1;
+
         $this->setTabela($tabela);
         if (!empty($parseString))
             parse_str($parseString, $this->places);
 
         $info = Metadados::getInfo(str_replace(PRE, "", $this->tabela));
-        $termos = parent::addLogicMajor($termos ?? "", $this->tabela, $info, $this->ignoreSystem || $ignoreSystem !== null);
+        $termos = parent::addLogicMajor($termos ?? "", $this->tabela, $info, $this->ignoreSystem || $ignoreSystem !== null, $ignoreOwnerpub);
 
         if(!empty($info['password']) && $this->select === "*" && !empty($info['columns_readable']))
             $this->select = implode(", ", $info['columns_readable']) . ($info['user'] === 1 ? ", usuarios_id" : ""). ($info['autor'] === 1 ? ", autorpub" : ""). ($info['autor'] === 2 ? ", ownerpub" : "");

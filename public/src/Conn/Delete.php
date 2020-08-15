@@ -50,7 +50,7 @@ class Delete extends Conn
     public function exeDelete($tabela, $termos, $parseString = null)
     {
         $read = new Read();
-        $read->exeRead($tabela, $termos, $parseString);
+        $read->exeRead($tabela, $termos, $parseString, !0);
         if ($read->getResult()) {
             $this->resultsUpdates = $read->getResult()[0];
             $this->setTabela($tabela);

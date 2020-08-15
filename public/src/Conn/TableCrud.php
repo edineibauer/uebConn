@@ -97,7 +97,7 @@ class TableCrud
 
         $this->exist = false;
         $read = new Read();
-        $read->ExeRead($this->table, "WHERE {$attr} = '" . str_replace("'", "''", $value) . "'");
+        $read->ExeRead($this->table, "WHERE {$attr} = '" . str_replace("'", "''", $value) . "'", null, !0);
         if ($read->getResult()):
             $this->exist = true;
             foreach ($read->getResult()[0] as $key => $value):
@@ -126,7 +126,7 @@ class TableCrud
     {
         $this->exist = false;
         $read = new Read();
-        $read->ExeRead($this->table, "WHERE {$sql}");
+        $read->ExeRead($this->table, "WHERE {$sql}", null, !0);
         if ($read->getResult()):
             $this->exist = true;
             foreach ($read->getResult()[0] as $key => $value):
@@ -155,7 +155,7 @@ class TableCrud
         if (!$this->colunas):
             $db = DATABASE;
             $read = new InfoTable();
-            $read->exeRead("COLUMNS", "WHERE TABLE_SCHEMA = :nb && TABLE_NAME = :nt", "nb={$db}&nt={$this->table}");
+            $read->exeRead("COLUMNS", "WHERE TABLE_SCHEMA = :nb && TABLE_NAME = :nt", "nb={$db}&nt={$this->table}", !0);
             if ($read->getResult()):
                 foreach ($read->getResult() as $gg):
                     $this->colunas[] = $gg['COLUMN_NAME'];

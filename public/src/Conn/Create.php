@@ -106,7 +106,7 @@ class Create extends Conn
             $this->result = $this->conn->lastInsertId();
 
             $read = new Read();
-            $read->exeRead($this->tabela, "WHERE id = :id", "id={$this->result}");
+            $read->exeRead($this->tabela, "WHERE id = :id", "id={$this->result}", !0);
             if($read->getResult())
                 $this->react = new React("create", str_replace(PRE, '', $this->tabela), $read->getResult()[0]);
         } catch (\PDOException $e) {

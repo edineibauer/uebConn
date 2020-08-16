@@ -68,9 +68,11 @@ class Read extends Conn
      */
     public function exeRead($tabela, $termos = null, $parseString = null, $ignoreSystem = null)
     {
-        $ignoreOwnerpub = preg_match("/ownerpub/i", $termos);
-        if($ignoreSystem === null && preg_match("/system_id/i", $termos))
+        $queryLogic = explode(" WHERE ", $termos);
+        if($ignoreSystem === null && count($queryLogic) > 1 && preg_match("/system_id/i", $queryLogic[1]))
             $ignoreSystem = 1;
+
+        $ignoreOwnerpub = (count($queryLogic) > 1 && preg_match("/ownerpub/i", $queryLogic[1]));
 
         $this->setTabela($tabela);
         if (!empty($parseString))

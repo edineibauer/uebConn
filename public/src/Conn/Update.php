@@ -63,6 +63,7 @@ class Update extends Conn
             $this->setTabela($tabela);
 
             $this->dados = $dados;
+
             $this->termos = (string)$termos;
 
             if (!empty($parseString))

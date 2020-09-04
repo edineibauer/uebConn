@@ -9,6 +9,7 @@
 
 namespace Conn;
 
+use Entity\Metadados;
 use Entity\React;
 
 class Create extends Conn
@@ -54,6 +55,13 @@ class Create extends Conn
         $this->setTabela($tabela);
         $this->dados = $dados;
         $this->dados['system_id'] = (empty($this->dados['system_id']) ? (!empty($_SESSION['userlogin']['setorData']['system_id']) ? $_SESSION['userlogin']['setorData']['system_id'] : null) : $this->dados['system_id']);
+
+        $info = Metadados::getInfo($tabela);
+
+        if($info['user'] === 2)
+            $this->dados['ownerpub'] = (empty($this->dados['ownerpub']) ? (!empty($_SESSION['userlogin']['id']) ? $_SESSION['userlogin']['id'] : null) : $this->dados['ownerpub']);
+        elseif($info['user'] === 1)
+            $this->dados['autorpub'] = (empty($this->dados['autorpub']) ? (!empty($_SESSION['userlogin']['id']) ? $_SESSION['userlogin']['id'] : null) : $this->dados['autorpub']);
 
         $this->execute();
     }

@@ -85,9 +85,8 @@ class Read extends Conn
             $this->select = implode(", ", $info['columns_readable']) . ($info['user'] === 1 ? ", usuarios_id" : ""). ($info['autor'] === 1 ? ", autorpub" : ""). ($info['autor'] === 2 ? ", ownerpub" : "");
 
         $this->sql = "SELECT {$this->select} FROM {$this->tabela} {$termos}";
-        $this->execute();
-
         $this->select = "*";
+        $this->execute();
     }
 
     /**

@@ -113,7 +113,8 @@ class Delete extends Conn
         try {
             $this->delete->execute($this->places);
             $this->result = true;
-            $this->react = new React("delete", str_replace(PRE, '', $this->tabela), $this->resultsUpdates[0] ?? [], $this->resultsUpdates[0] ?? []);
+            $result = (is_array($this->resultsUpdates) ? (!empty($this->resultsUpdates[0]) ? $this->resultsUpdates[0] : $this->resultsUpdates) : []);
+            $this->react = new React("delete", str_replace(PRE, '', $this->tabela), $result, $result);
         } catch (\PDOException $e) {
             $this->result = null;
             self::setError("<b>Erro ao Deletar:</b> {$e->getMessage()}");

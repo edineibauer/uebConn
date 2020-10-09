@@ -73,7 +73,7 @@ class Read extends Conn
         if (!empty($parseString))
             parse_str($parseString, $this->places);
 
-        if(preg_match("/wcache_/i", $tabela)) {
+        if(preg_match("/^" . PRE . "wcache_/i", $this->tabela)) {
 
             $this->sql = "SELECT data FROM {$this->tabela} {$termos}";
             $this->select = "*";

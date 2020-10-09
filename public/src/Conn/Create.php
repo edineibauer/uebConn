@@ -58,10 +58,12 @@ class Create extends Conn
 
         $info = Metadados::getInfo($tabela);
 
-        if($info['autor'] === 2)
-            $this->dados['ownerpub'] = (empty($this->dados['ownerpub']) ? (!empty($_SESSION['userlogin']['id']) ? $_SESSION['userlogin']['id'] : null) : $this->dados['ownerpub']);
-        elseif($info['autor'] === 1)
-            $this->dados['autorpub'] = (empty($this->dados['autorpub']) ? (!empty($_SESSION['userlogin']['id']) ? $_SESSION['userlogin']['id'] : null) : $this->dados['autorpub']);
+        if(!preg_match("/^" . PRE . "wcache_/i", $this->tabela)) {
+            if ($info['autor'] === 2)
+                $this->dados['ownerpub'] = (empty($this->dados['ownerpub']) ? (!empty($_SESSION['userlogin']['id']) ? $_SESSION['userlogin']['id'] : null) : $this->dados['ownerpub']);
+            elseif ($info['autor'] === 1)
+                $this->dados['autorpub'] = (empty($this->dados['autorpub']) ? (!empty($_SESSION['userlogin']['id']) ? $_SESSION['userlogin']['id'] : null) : $this->dados['autorpub']);
+        }
 
         $this->execute();
     }

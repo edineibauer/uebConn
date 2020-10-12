@@ -146,14 +146,18 @@ abstract class Conn
         /**
          * SqlCommand not send the table, so search for it
          */
+        $prefix = "";
         $system = "system_id";
         if (empty($tabela)) {
             $from = explode("FROM ", $queryCommand);
             if (!empty($from[1])) {
                 $tabela = explode(" ", $from[1])[0];
 
-                if (!empty($tabela) && preg_match("/FROM {$tabela} as /i", $queryCommand))
-                    $system = explode(" ", explode("FROM {$tabela} as ", $queryCommand)[1])[0] . ".system_id";
+                if (!empty($tabela) && preg_match("/FROM {$tabela} as /i", $queryCommand)) {
+                    $prefix = explode(" ", explode("FROM {$tabela} as ", $queryCommand)[1])[0];
+                    $prefix = !empty($prefix) ? $prefix . "." : "";
+                    $system = $prefix . "system_id";
+                }
             }
         }
 
@@ -179,13 +183,13 @@ abstract class Conn
              * where register setor like my setor
              */
             if (!empty($info['setor']))
-                $whereSetor = " {$info['setor']} = '{$_SESSION['userlogin']['setor']}'";
+                $whereSetor = " {$prefix}{$info['setor']} = '{$_SESSION['userlogin']['setor']}'";
 
             /**
              * where register owner like me
              */
             if(!$ignoreOwnerpub && !empty($info['autor']) && $info['autor'] === 2)
-                $whereSetor .= (empty($whereSetor) ? "" : " && ") . " ownerpub = '{$_SESSION['userlogin']['id']}'";
+                $whereSetor .= (empty($whereSetor) ? "" : " && ") . " {$prefix}ownerpub = '{$_SESSION['userlogin']['id']}'";
 
             if (!empty($info['system']) || !empty($whereSetor)) {
                 if (preg_match("/WHERE /i", $queryCommand)) {

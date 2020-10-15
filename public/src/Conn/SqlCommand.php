@@ -11,7 +11,6 @@ namespace Conn;
 class SqlCommand extends Conn
 {
     private $select;
-    private $places;
     private $result;
     private $ignoreSystem;
 
@@ -60,8 +59,9 @@ class SqlCommand extends Conn
     public function exeCommand($Query, $ignoreSystem = null)
     {
         $queryLogic = explode(" WHERE ", $Query);
-        if($ignoreSystem === null && count($queryLogic) > 1 && preg_match("/system_id/i", $queryLogic[1]))
-            $this->ignoreSystem = 1;
+
+        if($ignoreSystem || (count($queryLogic) > 1 && preg_match("/system_id/i", $queryLogic[1])))
+            $this->ignoreSystem = !0;
 
         $this->select = parent::addLogicMajor((string)$Query, "", [], $this->ignoreSystem, (count($queryLogic) > 1 && preg_match("/ownerpub/i", $queryLogic[1])));
         $this->execute();

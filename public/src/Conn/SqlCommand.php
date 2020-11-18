@@ -60,7 +60,7 @@ class SqlCommand extends Conn
     {
         $queryLogic = explode(" WHERE ", $Query);
 
-        if($ignoreSystem || (count($queryLogic) > 1 && preg_match("/system_id/i", $queryLogic[1])))
+        if($ignoreSystem || (count($queryLogic) > 1 && preg_match("/system_id/i", explode(" GROUP BY ", $queryLogic[1])[0])))
             $this->ignoreSystem = !0;
 
         $this->select = parent::addLogicMajor((string)$Query, "", [], $this->ignoreSystem, (count($queryLogic) > 1 && preg_match("/ownerpub/i", $queryLogic[1])));

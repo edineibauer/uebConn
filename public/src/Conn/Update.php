@@ -129,8 +129,14 @@ class Update extends Conn
     {
         $this->dadosName = [];
         foreach ($this->dados as $Key => $Value) {
-            $Places[] = "`{$Key}` = :" . str_replace('-', '_', \Helpers\Check::name($Key));
-            $this->dadosName[str_replace('-', '_', \Helpers\Check::name($Key))] = $Value;
+            $ValueSignal = substr($Value, 0, 1);
+            $ValueNumber = ((float)substr($Value, 1));
+            if((($ValueSignal . $ValueNumber) === $Value || ($ValueSignal . " " . $ValueNumber) === $Value) && in_array($ValueSignal, ["+", "-", "*", "/"])) {
+                $Places[] = "`{$Key}` = " . $Key . $Value;
+            } else {
+                $Places[] = "`{$Key}` = :" . str_replace('-', '_', \Helpers\Check::name($Key));
+                $this->dadosName[str_replace('-', '_', \Helpers\Check::name($Key))] = $Value;
+            }
         }
 
         $Places = implode(', ', $Places);

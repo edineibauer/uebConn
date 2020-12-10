@@ -74,33 +74,6 @@ class SqlCommand extends Conn
      * ****************************************
      */
 
-    /**
-     * Check if have read commando on query, if have
-     * add all table read name on SESSION
-     */
-    private function addEntitysToSession(string $queryCommand)
-    {
-        $from = explode(" FROM ", $queryCommand);
-        if (!empty($from[1])) {
-            foreach ($from as $i => $tableName) {
-                if($i === 0)
-                    continue;
-
-                $_SESSION['db'][] = (!empty(PRE) ? preg_replace('/'.preg_quote(PRE, '/').'/', '', explode(" ", $tableName)[0], 1) : explode(" ", $tableName)[0]);
-            }
-        }
-
-        $from = explode(" JOIN ", $queryCommand);
-        if (!empty($from[1])) {
-            foreach ($from as $i => $tableName) {
-                if($i === 0)
-                    continue;
-
-                $_SESSION['db'][] = (!empty(PRE) ? preg_replace('/'.preg_quote(PRE, '/').'/', '', explode(" ", $tableName)[0], 1) : explode(" ", $tableName)[0]);
-            }
-        }
-    }
-
     //Obtém o PDO e Prepara a query
     private function connect()
     {

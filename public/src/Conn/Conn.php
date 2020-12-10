@@ -139,7 +139,9 @@ abstract class Conn
                 if($i === 0)
                     continue;
 
-                $_SESSION['db'][] = (!empty(PRE) ? preg_replace('/'.preg_quote(PRE, '/').'/', '', explode(" ", $tableName)[0], 1) : explode(" ", $tableName)[0]);
+                $entityToAdd = (!empty(PRE) ? preg_replace('/'.preg_quote(PRE, '/').'/', '', explode(" ", $tableName)[0], 1) : explode(" ", $tableName)[0]);
+                if(empty($_SESSION['db']) || !in_array($entityToAdd, $_SESSION['db']))
+                    $_SESSION['db'][] = $entityToAdd;
             }
         }
 
@@ -149,7 +151,9 @@ abstract class Conn
                 if($i === 0)
                     continue;
 
-                $_SESSION['db'][] = (!empty(PRE) ? preg_replace('/'.preg_quote(PRE, '/').'/', '', explode(" ", $tableName)[0], 1) : explode(" ", $tableName)[0]);
+                $entityToAdd = (!empty(PRE) ? preg_replace('/'.preg_quote(PRE, '/').'/', '', explode(" ", $tableName)[0], 1) : explode(" ", $tableName)[0]);
+                if(empty($_SESSION['db']) || !in_array($entityToAdd, $_SESSION['db']))
+                    $_SESSION['db'][] = $entityToAdd;
             }
         }
     }

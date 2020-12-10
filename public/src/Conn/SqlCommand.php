@@ -58,8 +58,9 @@ class SqlCommand extends Conn
      */
     public function exeCommand($Query, $ignoreSystem = null)
     {
-        $queryLogic = explode(" WHERE ", $Query);
+        parent::addEntitysToSession($Query);
 
+        $queryLogic = explode(" WHERE ", $Query);
         if($ignoreSystem || (count($queryLogic) > 1 && preg_match("/system_id/i", explode(" GROUP BY ", $queryLogic[1])[0])))
             $this->ignoreSystem = !0;
 
@@ -72,6 +73,33 @@ class SqlCommand extends Conn
      * *********** PRIVATE METHODS ************
      * ****************************************
      */
+
+    /**
+     * Check if have read commando on query, if have
+     * add all table read name on SESSION
+     */
+    private function addEntitysToSession(string $queryCommand)
+    {
+        $from = explode(" FROM ", $queryCommand);
+        if (!empty($from[1])) {
+            foreach ($from as $i => $tableName) {
+                if($i === 0)
+                    continue;
+
+                $_SESSION['db'][] = (!empty(PRE) ? preg_replace('/'.preg_quote(PRE, '/').'/', '', explode(" ", $tableName)[0], 1) : explode(" ", $tableName)[0]);
+            }
+        }
+
+        $from = explode(" JOIN ", $queryCommand);
+        if (!empty($from[1])) {
+            foreach ($from as $i => $tableName) {
+                if($i === 0)
+                    continue;
+
+                $_SESSION['db'][] = (!empty(PRE) ? preg_replace('/'.preg_quote(PRE, '/').'/', '', explode(" ", $tableName)[0], 1) : explode(" ", $tableName)[0]);
+            }
+        }
+    }
 
     //Obtém o PDO e Prepara a query
     private function connect()

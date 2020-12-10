@@ -80,6 +80,8 @@ class Read extends Conn
             $this->execute();
 
         } else {
+            $_SESSION['db'][] = (!empty(PRE) ? preg_replace('/'.preg_quote(PRE, '/').'/', '', $this->tabela, 1) : $this->tabela);
+            parent::addEntitysToSession($termos);
 
             $queryLogic = explode(" WHERE ", $termos);
             if($ignoreSystem === null && count($queryLogic) > 1 && preg_match("/system_id/i", $queryLogic[1]))

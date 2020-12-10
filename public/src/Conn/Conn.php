@@ -123,6 +123,38 @@ abstract class Conn
     }
 
     /**
+     * Check if have read commando on query, if have
+     * add all table read name on SESSION
+     *
+     * @param string|null $queryCommand
+     */
+    protected static function addEntitysToSession(string $queryCommand = null)
+    {
+        if(empty($queryCommand))
+            return;
+
+        $from = explode(" FROM ", $queryCommand);
+        if (!empty($from[1])) {
+            foreach ($from as $i => $tableName) {
+                if($i === 0)
+                    continue;
+
+                $_SESSION['db'][] = (!empty(PRE) ? preg_replace('/'.preg_quote(PRE, '/').'/', '', explode(" ", $tableName)[0], 1) : explode(" ", $tableName)[0]);
+            }
+        }
+
+        $from = explode(" JOIN ", $queryCommand);
+        if (!empty($from[1])) {
+            foreach ($from as $i => $tableName) {
+                if($i === 0)
+                    continue;
+
+                $_SESSION['db'][] = (!empty(PRE) ? preg_replace('/'.preg_quote(PRE, '/').'/', '', explode(" ", $tableName)[0], 1) : explode(" ", $tableName)[0]);
+            }
+        }
+    }
+
+    /**
      * Aplica clausula WHERE padrão para consultas no banco
      *
      * @param string $queryCommand

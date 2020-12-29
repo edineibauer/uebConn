@@ -153,6 +153,18 @@ class Update extends Conn
             $this->result = true;
 
             /**
+             * Delete caches IDs
+             */
+            $idList = "";
+            foreach ($this->resultsUpdates as $resultsUpdate)
+                $idList .= (!empty($idList) ? ", " : "") . $resultsUpdate['id'];
+
+            if(!empty($idList)) {
+                $sql = new SqlCommand(!0);
+                $sql->exeCommand("DELETE FROM " . str_replace(PRE, PRE . "wcache_", $this->tabela) . " WHERE id IN (" . $idList . ")");
+            }
+
+            /**
              * Garante que todos os campos estejam presentes nos dados
             */
             foreach ($this->resultsUpdates[0] as $col => $value) {

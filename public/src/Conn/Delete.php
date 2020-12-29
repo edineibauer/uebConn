@@ -114,6 +114,19 @@ class Delete extends Conn
             $this->delete->execute($this->places);
             $this->result = true;
             $result = (is_array($this->resultsUpdates) ? (!empty($this->resultsUpdates[0]) ? $this->resultsUpdates[0] : $this->resultsUpdates) : []);
+
+            /**
+             * Delete caches IDs
+             */
+            $idList = "";
+            foreach ($this->resultsUpdates as $resultsUpdate)
+                $idList .= (!empty($idList) ? ", " : "") . $resultsUpdate['id'];
+
+            if(!empty($idList)) {
+                $sql = new SqlCommand(!0);
+                $sql->exeCommand("DELETE FROM " . str_replace(PRE, PRE . "wcache_", $this->tabela) . " WHERE id IN (" . $idList . ")");
+            }
+
             $this->react = new React("delete", str_replace(PRE, '', $this->tabela), $result, $result);
         } catch (\PDOException $e) {
             $this->result = null;

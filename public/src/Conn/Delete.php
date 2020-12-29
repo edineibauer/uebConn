@@ -19,6 +19,7 @@ class Delete extends Conn
     private $result;
     private $react;
     private $resultsUpdates;
+    private $isCache;
 
     /** @var PDOStatement */
     private $delete;
@@ -49,20 +50,23 @@ class Delete extends Conn
      */
     public function exeDelete($tabela, $termos, $parseString = null)
     {
-        $read = new Read();
-        $read->exeRead($tabela, $termos, $parseString, !0);
-        if ($read->getResult()) {
-            $this->resultsUpdates = $read->getResult()[0];
-            $this->setTabela($tabela);
-            $this->termos = (string)$termos;
+        $this->setTabela($tabela);
+        $this->isCache = substr( $this->tabela, strlen(PRE), 7) === "wcache_";
 
-            if (!empty($parseString))
-                parse_str($parseString, $this->places);
-            else
-                $this->places = [];
-
-            $this->execute();
+        if(!$this->isCache) {
+            $read = new Read();
+            $read->exeRead($tabela, $termos, $parseString, !0);
+            if ($read->getResult())
+                $this->resultsUpdates = $read->getResult()[0];
         }
+
+        $this->termos = (string)$termos;
+        if (!empty($parseString))
+            parse_str($parseString, $this->places);
+        else
+            $this->places = [];
+
+        $this->execute();
     }
 
     public function getResult()
@@ -113,21 +117,24 @@ class Delete extends Conn
         try {
             $this->delete->execute($this->places);
             $this->result = true;
-            $result = (is_array($this->resultsUpdates) ? (!empty($this->resultsUpdates[0]) ? $this->resultsUpdates[0] : $this->resultsUpdates) : []);
 
-            /**
-             * Delete caches IDs
-             */
-            $idList = "";
-            foreach ($this->resultsUpdates as $resultsUpdate)
-                $idList .= (!empty($idList) ? ", " : "") . $resultsUpdate['id'];
+            if(!$this->isCache) {
+                $result = (is_array($this->resultsUpdates) ? (!empty($this->resultsUpdates[0]) ? $this->resultsUpdates[0] : $this->resultsUpdates) : []);
 
-            if(!empty($idList)) {
-                $sql = new SqlCommand(!0);
-                $sql->exeCommand("DELETE FROM " . str_replace(PRE, PRE . "wcache_", $this->tabela) . " WHERE id IN (" . $idList . ")");
+                /**
+                 * Delete caches IDs
+                 */
+                $idList = "";
+                foreach ($this->resultsUpdates as $resultsUpdate)
+                    $idList .= (!empty($idList) ? ", " : "") . $resultsUpdate['id'];
+
+                if (!empty($idList)) {
+                    $sql = new SqlCommand(!0);
+                    $sql->exeCommand("DELETE FROM " . str_replace(PRE, PRE . "wcache_", $this->tabela) . " WHERE id IN (" . $idList . ")");
+                }
+
+                $this->react = new React("delete", str_replace(PRE, '', $this->tabela), $result, $result);
             }
-
-            $this->react = new React("delete", str_replace(PRE, '', $this->tabela), $result, $result);
         } catch (\PDOException $e) {
             $this->result = null;
             self::setError("<b>Erro ao Deletar:</b> {$e->getMessage()}");

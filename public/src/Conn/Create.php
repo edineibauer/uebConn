@@ -20,6 +20,7 @@ class Create extends Conn
     private $dadosName;
     private $result;
     private $react;
+    private $isCache;
 
     /** @var PDOStatement */
     private $create;
@@ -53,12 +54,16 @@ class Create extends Conn
     public function exeCreate($tabela, array $dados)
     {
         $this->setTabela($tabela);
+        $this->isCache = substr( $this->tabela, strlen(PRE), 7) === "wcache_";
         $this->dados = $dados;
-        $this->dados['system_id'] = (empty($this->dados['system_id']) ? (!empty($_SESSION['userlogin']['setorData']['system_id']) ? $_SESSION['userlogin']['setorData']['system_id'] : null) : $this->dados['system_id']);
-
         $info = Metadados::getInfo($tabela);
 
-        if(!preg_match("/^" . PRE . "wcache_/i", $this->tabela)) {
+        $this->dados['system_id'] = (empty($this->dados['system_id']) ? (!empty($_SESSION['userlogin']['setorData']['system_id']) ? $_SESSION['userlogin']['setorData']['system_id'] : null) : $this->dados['system_id']);
+
+        if($this->isCache) {
+            $this->dados['ownerpub'] = ($info['autor'] === 2 ? (empty($this->dados['ownerpub']) ? (!empty($_SESSION['userlogin']['id']) ? $_SESSION['userlogin']['id'] : null) : $this->dados['ownerpub']) : null);
+
+        } else {
             if ($info['autor'] === 2)
                 $this->dados['ownerpub'] = (empty($this->dados['ownerpub']) ? (!empty($_SESSION['userlogin']['id']) ? $_SESSION['userlogin']['id'] : null) : $this->dados['ownerpub']);
             elseif ($info['autor'] === 1)
@@ -115,10 +120,12 @@ class Create extends Conn
             $this->create->execute($this->dadosName);
             $this->result = $this->conn->lastInsertId();
 
-            $read = new Read();
-            $read->exeRead($this->tabela, "WHERE id = :id", "id={$this->result}", !0);
-            if($read->getResult())
-                $this->react = new React("create", str_replace(PRE, '', $this->tabela), $read->getResult()[0]);
+            if(!$this->isCache) {
+                $read = new Read();
+                $read->exeRead($this->tabela, "WHERE id = :id", "id={$this->result}", !0);
+                if ($read->getResult())
+                    $this->react = new React("create", str_replace(PRE, '', $this->tabela), $read->getResult()[0]);
+            }
         } catch (\PDOException $e) {
             $this->result = null;
             self::setError("<b>Erro ao cadastrar: ({$this->tabela})</b> {$e->getMessage()}");

@@ -22,6 +22,7 @@ class Update extends Conn
     private $result;
     private $react;
     private $resultsUpdates;
+    private $isCache;
 
     /** @var PDOStatement */
     private $update;
@@ -56,24 +57,25 @@ class Update extends Conn
      */
     public function exeUpdate(string $tabela, array $dados, string $termos, $parseString = null)
     {
-        $read = new Read();
-        $read->exeRead($tabela, $termos, $parseString, !0);
-        if($read->getResult()) {
-            $this->resultsUpdates = $read->getResult();
-            $this->setTabela($tabela);
+        $this->setTabela($tabela);
+        $this->isCache = substr( $this->tabela, strlen(PRE), 7) === "wcache_";
 
-            $this->dados = $dados;
-
-            $this->termos = (string)$termos;
-
-            if (!empty($parseString))
-                parse_str($parseString, $this->places);
-            else
-                $this->places = [];
-
-            $this->execute();
+        if(!$this->isCache) {
+            $read = new Read();
+            $read->exeRead($tabela, $termos, $parseString, !0);
+            if($read->getResult())
+                $this->resultsUpdates = $read->getResult();
         }
 
+        $this->dados = $dados;
+        $this->termos = (string)$termos;
+
+        if (!empty($parseString))
+            parse_str($parseString, $this->places);
+        else
+            $this->places = [];
+
+        $this->execute();
     }
 
     /**
@@ -152,27 +154,30 @@ class Update extends Conn
             $this->update->execute(array_merge($this->dadosName, $this->places));
             $this->result = true;
 
-            /**
-             * Delete caches IDs
-             */
-            $idList = "";
-            foreach ($this->resultsUpdates as $resultsUpdate)
-                $idList .= (!empty($idList) ? ", " : "") . $resultsUpdate['id'];
+            if(!$this->isCache) {
 
-            if(!empty($idList)) {
-                $sql = new SqlCommand(!0);
-                $sql->exeCommand("DELETE FROM " . str_replace(PRE, PRE . "wcache_", $this->tabela) . " WHERE id IN (" . $idList . ")");
+                /**
+                 * Delete caches IDs
+                 */
+                $idList = "";
+                foreach ($this->resultsUpdates as $resultsUpdate)
+                    $idList .= (!empty($idList) ? ", " : "") . $resultsUpdate['id'];
+
+                if (!empty($idList)) {
+                    $sql = new SqlCommand(!0);
+                    $sql->exeCommand("DELETE FROM " . str_replace(PRE, PRE . "wcache_", $this->tabela) . " WHERE id IN (" . $idList . ")");
+                }
+
+                /**
+                 * Garante que todos os campos estejam presentes nos dados
+                 */
+                foreach ($this->resultsUpdates[0] as $col => $value) {
+                    if (!isset($this->dados[$col]))
+                        $this->dados[$col] = $value;
+                }
+
+                $this->react = new React("update", str_replace(PRE, '', $this->tabela), $this->dados, $this->resultsUpdates[0] ?? []);
             }
-
-            /**
-             * Garante que todos os campos estejam presentes nos dados
-            */
-            foreach ($this->resultsUpdates[0] as $col => $value) {
-                if(!isset($this->dados[$col]))
-                    $this->dados[$col] = $value;
-            }
-
-            $this->react = new React("update", str_replace(PRE, '', $this->tabela), $this->dados, $this->resultsUpdates[0] ?? []);
         } catch (\PDOException $e) {
             $this->result = null;
             self::setError("<b>(Update) Erro ao Ler: ({$this->tabela})</b> {$e->getMessage()}");

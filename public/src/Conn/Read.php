@@ -69,37 +69,39 @@ class Read extends Conn
     public function exeRead($tabela, $termos = null, $parseString = null, $ignoreSystem = null)
     {
         $this->setTabela($tabela);
+        $isCache = substr( $this->tabela, strlen(PRE), 7) === "wcache_";
 
         if (!empty($parseString))
             parse_str($parseString, $this->places);
 
-        if(preg_match("/^" . PRE . "wcache_/i", $this->tabela)) {
+        /**
+         * Restrict logic identifier
+         * ownerpub and system_id
+         */
+        $queryLogic = explode(" WHERE ", $termos);
+        if($ignoreSystem === null && count($queryLogic) > 1 && preg_match("/system_id/i", $queryLogic[1]))
+            $ignoreSystem = 1;
 
+        $ignoreOwnerpub = (count($queryLogic) > 1 && preg_match("/ownerpub/i", $queryLogic[1]));
+
+        $info = Metadados::getInfo(str_replace(PRE, "", $this->tabela));
+        $termos = parent::addLogicMajor($termos ?? "", $this->tabela, $info, $this->ignoreSystem || $ignoreSystem !== null, $ignoreOwnerpub);
+
+        if($isCache) {
             $this->sql = "SELECT data FROM {$this->tabela} {$termos}";
-            $this->select = "*";
-            $this->execute();
 
         } else {
             $_SESSION['db'][] = (!empty(PRE) ? preg_replace('/'.preg_quote(PRE, '/').'/', '', $this->tabela, 1) : $this->tabela);
             parent::addEntitysToSession($termos);
 
-            $queryLogic = explode(" WHERE ", $termos);
-            if($ignoreSystem === null && count($queryLogic) > 1 && preg_match("/system_id/i", $queryLogic[1]))
-                $ignoreSystem = 1;
-
-            $ignoreOwnerpub = (count($queryLogic) > 1 && preg_match("/ownerpub/i", $queryLogic[1]));
-
-            $info = Metadados::getInfo(str_replace(PRE, "", $this->tabela));
-            $termos = parent::addLogicMajor($termos ?? "", $this->tabela, $info, $this->ignoreSystem || $ignoreSystem !== null, $ignoreOwnerpub);
-
             if(!empty($info['password']) && $this->select === "*" && !empty($info['columns_readable']))
                 $this->select = implode(", ", $info['columns_readable']) . ($info['user'] === 1 ? ", usuarios_id" : ""). ($info['autor'] === 1 ? ", autorpub" : ""). ($info['autor'] === 2 ? ", ownerpub" : "");
 
             $this->sql = "SELECT {$this->select} FROM {$this->tabela} {$termos}";
-            $this->select = "*";
-            $this->execute();
-
         }
+
+        $this->select = "*";
+        $this->execute();
     }
 
     /**

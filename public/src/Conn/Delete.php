@@ -56,8 +56,12 @@ class Delete extends Conn
         if(!$this->isCache) {
             $read = new Read();
             $read->exeRead($tabela, $termos, $parseString, !0);
-            if ($read->getResult())
-                $this->resultsUpdates = $read->getResult()[0];
+            if ($read->getResult()) {
+                $this->resultsUpdates = $read->getResult();
+            } else {
+                $this->result = true;
+                return;
+            }
         }
 
         $this->termos = (string)$termos;
@@ -119,7 +123,7 @@ class Delete extends Conn
             $this->result = true;
 
             if(!$this->isCache) {
-                $result = (is_array($this->resultsUpdates) ? (!empty($this->resultsUpdates[0]) ? $this->resultsUpdates[0] : $this->resultsUpdates) : []);
+                $result = (is_array($this->resultsUpdates) && !empty($this->resultsUpdates[0]) ? $this->resultsUpdates[0] : []);
 
                 /**
                  * Delete caches IDs

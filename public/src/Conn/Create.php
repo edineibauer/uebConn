@@ -56,7 +56,7 @@ class Create extends Conn
         $this->setTabela($tabela);
         $this->isCache = substr( $this->tabela, strlen(PRE), 7) === "wcache_";
         $this->dados = $dados;
-        $info = Metadados::getInfo($tabela);
+        $info = Metadados::getInfo(str_replace([PRE, "wcache_"], "", $this->tabela));
 
         $this->dados['system_id'] = (empty($this->dados['system_id']) ? (!empty($_SESSION['userlogin']['setorData']['system_id']) ? $_SESSION['userlogin']['setorData']['system_id'] : null) : $this->dados['system_id']);
 

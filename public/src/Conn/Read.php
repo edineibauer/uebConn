@@ -84,7 +84,7 @@ class Read extends Conn
 
         $ignoreOwnerpub = (count($queryLogic) > 1 && preg_match("/ownerpub/i", $queryLogic[1]));
 
-        $info = Metadados::getInfo(str_replace(PRE, "", $this->tabela));
+        $info = Metadados::getInfo(str_replace([PRE, "wcache_"], "", $this->tabela));
         $termos = parent::addLogicMajor($termos ?? "", $this->tabela, $info, $this->ignoreSystem || $ignoreSystem !== null, $ignoreOwnerpub);
 
         if($isCache) {

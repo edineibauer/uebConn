@@ -176,7 +176,7 @@ abstract class Conn
          * not is setted a user
          * is explicit ignored
          */
-        if ($ignoreSystem || empty($_SESSION['userlogin']) || (empty($_SESSION['userlogin']['setor']) && $_SESSION['userlogin']['setor'] != 0) || $_SESSION['userlogin']['setor'] === "admin")
+        if ($ignoreSystem || empty($_SESSION['userlogin']) || empty($_SESSION['userlogin']['system_id']) || $_SESSION['userlogin']['setor'] === "admin")
             return $queryCommand;
 
         /**

@@ -165,7 +165,7 @@ class Update extends Conn
 
                 if (!empty($idList)) {
                     $sql = new SqlCommand(!0);
-                    $sql->exeCommand("DELETE FROM " . str_replace(PRE, PRE . "wcache_", $this->tabela) . " WHERE id IN (" . $idList . ")");
+                    $sql->exeCommand("DELETE FROM " . PRE . "wcache_" . str_replace(PRE, "", $this->tabela) . " WHERE id IN (" . $idList . ")");
                 }
 
                 /**

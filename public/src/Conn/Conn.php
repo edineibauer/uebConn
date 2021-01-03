@@ -170,13 +170,14 @@ abstract class Conn
      */
     protected static function addLogicMajor(string $queryCommand, string $tabela = "", array $info = [], bool $ignoreSystem = !1, bool $ignoreOwnerpub = !1): string
     {
+        $setor = Config::getSetor();
         /**
          * Not apply logic user when
          * is admin
          * not is setted a user
          * is explicit ignored
          */
-        if ($_SESSION['userlogin']['setor'] === "admin" || ($ignoreSystem && $ignoreOwnerpub))
+        if ($setor === "admin" || ($ignoreSystem && $ignoreOwnerpub))
             return $queryCommand;
 
         /**
@@ -201,8 +202,8 @@ abstract class Conn
          * Check for read permission to this user
          */
         $permissoes = Config::getPermission();
-        if(isset($permissoes[$_SESSION['userlogin']['setor']][$tabela]['read']) && !$permissoes[$_SESSION['userlogin']['setor']][$tabela]['read']) {
-            self::$error = $_SESSION['userlogin']['setor'] . " não tem permissão de leitura em " . $tabela;
+        if(isset($permissoes[$setor][$tabela]['read']) && !$permissoes[$setor][$tabela]['read']) {
+            self::$error = $setor . " não tem permissão de leitura em " . $tabela;
             return (empty($tabela) ? "SELECT * FROM " . PRE . $tabela . " " : "") . "WHERE id < 0";
         }
 
@@ -219,13 +220,13 @@ abstract class Conn
              * where register setor like my setor
              */
             if (!empty($info['setor']))
-                $whereSetor = " {$prefix}{$info['setor']} = '{$_SESSION['userlogin']['setor']}'";
+                $whereSetor = " {$prefix}{$info['setor']} = '{$setor}'";
 
             /**
              * where register owner like me
              */
             if(!$ignoreOwnerpub && !empty($info['autor']) && $info['autor'] === 2)
-                $whereSetor .= (empty($whereSetor) ? "" : " && ") . " {$prefix}ownerpub = '{$_SESSION['userlogin']['id']}'";
+                $whereSetor .= (empty($whereSetor) ? "" : " && ") . " {$prefix}ownerpub = '" . ($setor != "0" ? $_SESSION['userlogin']['id'] : "0") . "'";
 
             if (!empty($info['system']) || !empty($whereSetor)) {
                 if (preg_match("/WHERE /i", $queryCommand)) {
@@ -255,16 +256,16 @@ abstract class Conn
 
                 if(!empty($info['system'])) {
                     if(!$ignoreSystem)
-                        $whereSetor .= (!empty($whereSetor) ? " && " : "") . "({$system} IS NULL || {$system} = '' || {$system} = '{$_SESSION['userlogin']['system_id']}') ";
+                        $whereSetor .= (!empty($whereSetor) ? " && " : "") . " ({$system} IS NULL || {$system} = ''" . ($setor != "0" ? " || {$system} = '{$_SESSION['userlogin']['system_id']}'" : "") . ")";
 
                     if (isset($command) && !empty($query[1])) {
-                        $queryCommand = $query[0] . " WHERE{$whereSetor}" . ($command === "WHERE " ? " && " : $command) . $query[1];
+                        $queryCommand = $query[0] . " WHERE{$whereSetor}" . ($command === "WHERE " ? (!empty($whereSetor) ? " && " : " ") : $command) . $query[1];
                     } else {
                         $queryCommand .= " WHERE{$whereSetor}";
                     }
                 } else {
                     if (isset($command) && !empty($query[1])) {
-                        $queryCommand = $query[0] . " WHERE{$whereSetor}" . ($command === "WHERE " ? " && " : $command) . $query[1];
+                        $queryCommand = $query[0] . " WHERE{$whereSetor}" . ($command === "WHERE " ? (!empty($whereSetor) ? " && " : " ") : $command) . $query[1];
                     } else {
                         $queryCommand .= " WHERE{$whereSetor}";
                     }

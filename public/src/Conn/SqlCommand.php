@@ -13,6 +13,7 @@ class SqlCommand extends Conn
     private $select;
     private $result;
     private $ignoreSystem;
+    private $ignoreOwnerpub;
 
     /** @var PDOStatement */
     private $command;
@@ -20,9 +21,15 @@ class SqlCommand extends Conn
     /** @var PDO */
     private $conn;
 
-    public function __construct(bool $ignoreSystem = false)
+    /**
+     * SqlCommand constructor.
+     * @param bool $ignoreSystem
+     * @param bool $ignoreOwnerpub
+     */
+    public function __construct(bool $ignoreSystem = false, bool $ignoreOwnerpub = false)
     {
         $this->ignoreSystem = $ignoreSystem;
+        $this->ignoreOwnerpub = $ignoreOwnerpub;
     }
 
     /**
@@ -56,7 +63,7 @@ class SqlCommand extends Conn
      * @param $Query
      * @param bool|null $ignoreSystem
      */
-    public function exeCommand($Query, $ignoreSystem = null)
+    public function exeCommand($Query, $ignoreSystem = null, $ignoreOwnerpub = null)
     {
         parent::addEntitysToSession($Query);
 
@@ -64,7 +71,10 @@ class SqlCommand extends Conn
         if($ignoreSystem === null && ((count($queryLogic) > 1 && preg_match("/ system_id\s*=/i", explode(" GROUP BY ", $queryLogic[1])[0])) || empty($_SESSION['userlogin']['system_id'])))
             $ignoreSystem = 1;
 
-        $this->select = parent::addLogicMajor((string)$Query, "", [], $this->ignoreSystem || $ignoreSystem !== null, (count($queryLogic) > 1 && preg_match("/ownerpub/i", $queryLogic[1])));
+        if($ignoreOwnerpub === null && (count($queryLogic) > 1 && preg_match("/ ownerpub\s*=/i", explode(" GROUP BY ", $queryLogic[1])[0])))
+            $ignoreOwnerpub = 1;
+
+        $this->select = parent::addLogicMajor((string)$Query, "", [], $this->ignoreSystem || $ignoreSystem !== null, $this->ignoreOwnerpub ||$ignoreOwnerpub !== null);
         $this->execute();
     }
 

@@ -19,6 +19,7 @@ class Read extends Conn
     private $result;
     private $tabela;
     private $ignoreSystem;
+    private $ignoreOwner;
 
     /** @var PDOStatement */
     private $read;
@@ -30,9 +31,10 @@ class Read extends Conn
      * Read constructor.
      * @param bool $ignoreSystem
      */
-    public function __construct(bool $ignoreSystem = false)
+    public function __construct(bool $ignoreSystem = false, bool $ignoreOwner = false)
     {
         $this->ignoreSystem = $ignoreSystem;
+        $this->ignoreOwner = $ignoreOwner;
     }
 
     /**
@@ -66,7 +68,7 @@ class Read extends Conn
      * @param STRING $parseString = link={$link}&link2={$link2}
      * @param bool|null $ignoreSystem
      */
-    public function exeRead($tabela, $termos = null, $parseString = null, $ignoreSystem = null)
+    public function exeRead($tabela, $termos = null, $parseString = null, $ignoreSystem = null, $ignoreOwnerpub = null)
     {
         $this->setTabela($tabela);
         $isCache = substr( $this->tabela, strlen(PRE), 7) === "wcache_";
@@ -79,13 +81,15 @@ class Read extends Conn
          * ownerpub and system_id
          */
         $queryLogic = explode(" WHERE", $termos);
+
         if($ignoreSystem === null && ((count($queryLogic) > 1 && preg_match("/ system_id\s*=/i", explode(" GROUP BY ", $queryLogic[1])[0])) || empty($_SESSION['userlogin']['system_id'])))
             $ignoreSystem = 1;
 
-        $ignoreOwnerpub = (count($queryLogic) > 1 && preg_match("/ ownerpub\s*=/i", $queryLogic[1]));
+        if($ignoreOwnerpub === null && (count($queryLogic) > 1 && preg_match("/ ownerpub\s*=/i", explode(" GROUP BY ", $queryLogic[1])[0])))
+            $ignoreOwnerpub = 1;
 
         $info = Metadados::getInfo(str_replace([PRE, "wcache_"], "", $this->tabela));
-        $termos = parent::addLogicMajor($termos ?? "", $this->tabela, $info, $this->ignoreSystem || $ignoreSystem !== null, $ignoreOwnerpub);
+        $termos = parent::addLogicMajor($termos ?? "", $this->tabela, $info, $this->ignoreSystem || $ignoreSystem !== null, $this->ignoreOwner || $ignoreOwnerpub !== null);
 
         if($isCache) {
             $this->sql = "SELECT data FROM {$this->tabela} {$termos}";

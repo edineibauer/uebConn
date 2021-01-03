@@ -133,8 +133,11 @@ class Delete extends Conn
                     $idList .= (!empty($idList) ? ", " : "") . $resultsUpdate['id'];
 
                 if (!empty($idList)) {
+                    $cacheTable =  PRE . "wcache_" . str_replace(PRE, "", $this->tabela);
                     $sql = new SqlCommand(!0);
-                    $sql->exeCommand("DELETE FROM " . PRE . "wcache_" . str_replace(PRE, "", $this->tabela) . " WHERE id IN (" . $idList . ")");
+                    $sql->exeCommand("SELECT COUNT(*) as t FROM information_schema.tables WHERE table_schema = '" . DATABASE . "' AND table_name = '{$cacheTable}'");
+                    if($sql->getResult() && $sql->getResult()[0]['t'] == 1)
+                        $sql->exeCommand("DELETE FROM {$cacheTable} WHERE id IN (" . $idList . ")");
                 }
 
                 $this->react = new React("delete", str_replace(PRE, '', $this->tabela), $result, $result);

@@ -176,7 +176,7 @@ abstract class Conn
          * not is setted a user
          * is explicit ignored
          */
-        if ($ignoreSystem || empty($_SESSION['userlogin']) || empty($_SESSION['userlogin']['system_id']) || $_SESSION['userlogin']['setor'] === "admin")
+        if ($_SESSION['userlogin']['setor'] === "admin" || ($ignoreSystem && $ignoreOwnerpub))
             return $queryCommand;
 
         /**
@@ -254,11 +254,13 @@ abstract class Conn
                 }
 
                 if(!empty($info['system'])) {
-                    $whereSetor .= (!empty($whereSetor) ? " && " : "");
+                    if(!$ignoreSystem)
+                        $whereSetor .= (!empty($whereSetor) ? " && " : "") . "({$system} IS NULL || {$system} = '' || {$system} = '{$_SESSION['userlogin']['system_id']}') ";
+
                     if (isset($command) && !empty($query[1])) {
-                        $queryCommand = $query[0] . " WHERE{$whereSetor} ({$system} IS NULL || {$system} = ''" . (empty($_SESSION['userlogin']['system_id']) ? "" : " || {$system} = '{$_SESSION['userlogin']['system_id']}'") . ")" . ($command === "WHERE " ? " && " : $command) . $query[1];
+                        $queryCommand = $query[0] . " WHERE{$whereSetor}" . ($command === "WHERE " ? " && " : $command) . $query[1];
                     } else {
-                        $queryCommand .= " WHERE{$whereSetor} ({$system} IS NULL || {$system} = ''" . (empty($_SESSION['userlogin']['system_id']) ? "" : " || {$system} = '{$_SESSION['userlogin']['system_id']}'") . ")";
+                        $queryCommand .= " WHERE{$whereSetor}";
                     }
                 } else {
                     if (isset($command) && !empty($query[1])) {

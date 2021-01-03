@@ -61,10 +61,10 @@ class SqlCommand extends Conn
         parent::addEntitysToSession($Query);
 
         $queryLogic = explode(" WHERE ", $Query);
-        if($ignoreSystem || (count($queryLogic) > 1 && preg_match("/system_id/i", explode(" GROUP BY ", $queryLogic[1])[0])))
-            $this->ignoreSystem = !0;
+        if($ignoreSystem === null && ((count($queryLogic) > 1 && preg_match("/ system_id\s*=/i", explode(" GROUP BY ", $queryLogic[1])[0])) || empty($_SESSION['userlogin']['system_id'])))
+            $ignoreSystem = 1;
 
-        $this->select = parent::addLogicMajor((string)$Query, "", [], $this->ignoreSystem, (count($queryLogic) > 1 && preg_match("/ownerpub/i", $queryLogic[1])));
+        $this->select = parent::addLogicMajor((string)$Query, "", [], $this->ignoreSystem || $ignoreSystem !== null, (count($queryLogic) > 1 && preg_match("/ownerpub/i", $queryLogic[1])));
         $this->execute();
     }
 

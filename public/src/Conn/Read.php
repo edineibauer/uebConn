@@ -78,11 +78,11 @@ class Read extends Conn
          * Restrict logic identifier
          * ownerpub and system_id
          */
-        $queryLogic = explode(" WHERE ", $termos);
-        if($ignoreSystem === null && count($queryLogic) > 1 && preg_match("/system_id/i", $queryLogic[1]))
+        $queryLogic = explode(" WHERE", $termos);
+        if($ignoreSystem === null && ((count($queryLogic) > 1 && preg_match("/ system_id\s*=/i", explode(" GROUP BY ", $queryLogic[1])[0])) || empty($_SESSION['userlogin']['system_id'])))
             $ignoreSystem = 1;
 
-        $ignoreOwnerpub = (count($queryLogic) > 1 && preg_match("/ownerpub/i", $queryLogic[1]));
+        $ignoreOwnerpub = (count($queryLogic) > 1 && preg_match("/ ownerpub\s*=/i", $queryLogic[1]));
 
         $info = Metadados::getInfo(str_replace([PRE, "wcache_"], "", $this->tabela));
         $termos = parent::addLogicMajor($termos ?? "", $this->tabela, $info, $this->ignoreSystem || $ignoreSystem !== null, $ignoreOwnerpub);

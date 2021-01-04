@@ -99,7 +99,7 @@ abstract class ForeignKeyMiddle
             $banco = $this->relation[$this->origin][$this->target];
 
             $read = new Read();
-            $read->ExeRead($banco, "WHERE {$this->getColumnTable($banco, $this->origin)} = :id", "id={$this->id}", !0);
+            $read->ExeRead($banco, "WHERE {$this->getColumnTable($banco, $this->origin)} = :id", "id={$this->id}", !0, !0);
             if ($read->getResult()):
                 foreach ($read->getResult() as $result):
                     $ids[] = $result[$this->getColumnTable($banco, $this->target)];

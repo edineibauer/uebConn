@@ -55,7 +55,7 @@ class Delete extends Conn
 
         if(!$this->isCache) {
             $read = new Read();
-            $read->exeRead($tabela, $termos, $parseString, !0);
+            $read->exeRead($tabela, $termos, $parseString, !0, !0);
             if ($read->getResult()) {
                 $this->resultsUpdates = $read->getResult();
             } else {

@@ -122,7 +122,7 @@ class Create extends Conn
 
             if(!$this->isCache) {
                 $read = new Read();
-                $read->exeRead($this->tabela, "WHERE id = :id", "id={$this->result}", !0);
+                $read->exeRead($this->tabela, "WHERE id = :id", "id={$this->result}", !0, !0);
                 if ($read->getResult())
                     $this->react = new React("create", str_replace(PRE, '', $this->tabela), $read->getResult()[0]);
             }

@@ -95,7 +95,10 @@ class Read extends Conn
             $this->sql = "SELECT data FROM {$this->tabela} {$termos}";
 
         } else {
-            $_SESSION['db'][] = (!empty(PRE) ? preg_replace('/'.preg_quote(PRE, '/').'/', '', $this->tabela, 1) : $this->tabela);
+            $entity = str_replace(PRE, '', $this->tabela);
+            if(empty($_SESSION['db']) || !in_array($entity, $_SESSION['db']))
+                $_SESSION['db'][] = $entity;
+
             parent::addEntitysToSession($termos);
 
             if(!empty($info['password']) && $this->select === "*" && !empty($info['columns_readable']))

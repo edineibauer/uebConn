@@ -171,13 +171,17 @@ abstract class Conn
     protected static function addLogicMajor(string $queryCommand, string $tabela = "", array $info = [], bool $ignoreSystem = !1, bool $ignoreOwnerpub = !1): string
     {
         $setor = Config::getSetor();
+
+        $ignoreSystem = ($ignoreSystem || $setor === "admin" || empty($_SESSION['userlogin']['system_id']));
+        $ignoreOwnerpub = ($ignoreOwnerpub || $setor === "admin");
+
         /**
          * Not apply logic user when
          * is admin
          * not is setted a user
          * is explicit ignored
          */
-        if ($setor === "admin" || ($ignoreSystem && $ignoreOwnerpub))
+        if ($ignoreSystem && $ignoreOwnerpub)
             return $queryCommand;
 
         /**

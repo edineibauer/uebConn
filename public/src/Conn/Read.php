@@ -72,24 +72,12 @@ class Read extends Conn
     {
         $this->setTabela($tabela);
         $isCache = substr( $this->tabela, strlen(PRE), 7) === "wcache_";
+        $info = Metadados::getInfo(str_replace([PRE, "wcache_"], "", $this->tabela));
 
         if (!empty($parseString))
             parse_str($parseString, $this->places);
 
-        /**
-         * Restrict logic identifier
-         * ownerpub and system_id
-         */
-        $queryLogic = explode(" WHERE", $termos);
-
-        if($ignoreSystem === null && ((count($queryLogic) > 1 && preg_match("/ system_id\s*=/i", explode(" GROUP BY ", $queryLogic[1])[0])) || empty($_SESSION['userlogin']['system_id'])))
-            $ignoreSystem = 1;
-
-        if($ignoreOwnerpub === null && (count($queryLogic) > 1 && preg_match("/ ownerpub\s*=/i", explode(" GROUP BY ", $queryLogic[1])[0])))
-            $ignoreOwnerpub = 1;
-
-        $info = Metadados::getInfo(str_replace([PRE, "wcache_"], "", $this->tabela));
-        $termos = parent::addLogicMajor($termos ?? "", $this->tabela, $info, $this->ignoreSystem || $ignoreSystem !== null, $this->ignoreOwner || $ignoreOwnerpub !== null);
+        $termos = parent::getQueryWithSystemAndOwnerProtection($termos ?? "", $this->tabela, $info, $this->ignoreSystem || $ignoreSystem !== null, $this->ignoreOwner || $ignoreOwnerpub !== null);
 
         if($isCache) {
             $this->sql = "SELECT data FROM {$this->tabela} {$termos}";

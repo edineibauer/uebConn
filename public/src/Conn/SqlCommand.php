@@ -10,7 +10,7 @@ namespace Conn;
 
 class SqlCommand extends Conn
 {
-    private $select;
+    public $select;
     private $result;
     private $ignoreSystem;
     private $ignoreOwnerpub;
@@ -66,15 +66,7 @@ class SqlCommand extends Conn
     public function exeCommand($Query, $ignoreSystem = null, $ignoreOwnerpub = null)
     {
         parent::addEntitysToSession($Query);
-
-        $queryLogic = explode(" WHERE ", $Query);
-        if($ignoreSystem === null && ((count($queryLogic) > 1 && preg_match("/ system_id\s*=/i", explode(" GROUP BY ", $queryLogic[1])[0])) || empty($_SESSION['userlogin']['system_id'])))
-            $ignoreSystem = 1;
-
-        if($ignoreOwnerpub === null && (count($queryLogic) > 1 && preg_match("/ ownerpub\s*=/i", explode(" GROUP BY ", $queryLogic[1])[0])))
-            $ignoreOwnerpub = 1;
-
-        $this->select = parent::addLogicMajor((string)$Query, "", [], $this->ignoreSystem || $ignoreSystem !== null, $this->ignoreOwnerpub ||$ignoreOwnerpub !== null);
+        $this->select = parent::getQueryWithSystemAndOwnerProtection((string)$Query, "", [], $this->ignoreSystem || $ignoreSystem !== null, $this->ignoreOwnerpub ||$ignoreOwnerpub !== null);
         $this->execute();
     }
 

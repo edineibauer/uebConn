@@ -168,19 +168,22 @@ abstract class Conn
      * @param bool $ignoreOwnerpub
      * @return string
      */
-    protected static function addLogicMajor(string $queryCommand, string $tabela = "", array $info = [], bool $ignoreSystem = !1, bool $ignoreOwnerpub = !1): string
+    protected static function getQueryWithSystemAndOwnerProtection(string $queryCommand, string $tabela = "", array $info = [], bool $ignoreSystem = false, bool $ignoreOwnerpub = false): string
     {
         $setor = Config::getSetor();
-
         $ignoreSystem = ($ignoreSystem || $setor === "admin" || empty($_SESSION['userlogin']['system_id']));
         $ignoreOwnerpub = ($ignoreOwnerpub || $setor === "admin");
 
-        /**
-         * Not apply logic user when
-         * is admin
-         * not is setted a user
-         * is explicit ignored
-         */
+        if ($ignoreSystem && $ignoreOwnerpub)
+            return $queryCommand;
+
+        $queryLogic = explode("WHERE ", $queryCommand);
+        if(!$ignoreSystem && ((count($queryLogic) > 1 && preg_match("/ system_id\s*=/i", explode(" GROUP BY ", $queryLogic[1])[0])) || empty($_SESSION['userlogin']['system_id'])))
+            $ignoreSystem = true;
+
+        if(!$ignoreOwnerpub && (count($queryLogic) > 1 && preg_match("/ ownerpub\s*=/i", explode(" GROUP BY ", $queryLogic[1])[0])))
+            $ignoreOwnerpub = true;
+
         if ($ignoreSystem && $ignoreOwnerpub)
             return $queryCommand;
 
@@ -258,21 +261,14 @@ abstract class Conn
                     $query = explode($command, $queryCommand, 2);
                 }
 
-                if(!empty($info['system'])) {
-                    if(!$ignoreSystem)
-                        $whereSetor .= (!empty($whereSetor) ? " && " : "") . " ({$system} IS NULL || {$system} = ''" . ($setor != "0" ? " || {$system} = '{$_SESSION['userlogin']['system_id']}'" : "") . ")";
+                if(!empty($info['system']) && !$ignoreSystem)
+                    $whereSetor .= (!empty($whereSetor) ? " && " : "") . " ({$system} IS NULL || {$system} = ''" . ($setor != "0" ? " || {$system} = '{$_SESSION['userlogin']['system_id']}'" : "") . ")";
 
-                    if (isset($command) && !empty($query[1])) {
-                        $queryCommand = $query[0] . " WHERE{$whereSetor}" . ($command === "WHERE " ? (!empty($whereSetor) ? " && " : " ") : $command) . $query[1];
-                    } else {
-                        $queryCommand .= " WHERE{$whereSetor}";
-                    }
-                } else {
-                    if (isset($command) && !empty($query[1])) {
-                        $queryCommand = $query[0] . " WHERE{$whereSetor}" . ($command === "WHERE " ? (!empty($whereSetor) ? " && " : " ") : $command) . $query[1];
-                    } else {
-                        $queryCommand .= " WHERE{$whereSetor}";
-                    }
+                if (isset($command) && !empty($query[1])) {
+                    $haveWhere = $command === "WHERE ";
+                    $queryCommand = $query[0] . (!empty($whereSetor) ? " WHERE{$whereSetor}" . ($haveWhere ? " && " : " ") : ($haveWhere ? "WHERE " : "")) . (!$haveWhere ? $command : "") . $query[1];
+                } elseif(!empty($whereSetor)) {
+                    $queryCommand .= " WHERE{$whereSetor}";
                 }
             }
         }

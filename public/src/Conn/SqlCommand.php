@@ -10,7 +10,7 @@ namespace Conn;
 
 class SqlCommand extends Conn
 {
-    public $select;
+    private $select;
     private $result;
     private $ignoreSystem;
     private $ignoreOwnerpub;

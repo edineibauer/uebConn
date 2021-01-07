@@ -178,11 +178,14 @@ abstract class Conn
             return $queryCommand;
 
         $queryLogic = explode("WHERE ", $queryCommand);
-        $queryBody = " " . explode(" GROUP BY ", $queryLogic[1])[0];
-        if(!$ignoreSystem && ((count($queryLogic) > 1 && preg_match("/ system_id\s*=/i", $queryBody)) || empty($_SESSION['userlogin']['system_id'])))
+
+        if(isset($queryLogic[1]))
+            $queryBody = " " . explode(" GROUP BY ", $queryLogic[1])[0];
+
+        if(!$ignoreSystem && (empty($_SESSION['userlogin']['system_id']) || (isset($queryBody) && preg_match("/ system_id\s*=/i", $queryBody))))
             $ignoreSystem = true;
 
-        if(!$ignoreOwnerpub && (count($queryLogic) > 1 && preg_match("/ ownerpub\s*=/i", $queryBody)))
+        if(!$ignoreOwnerpub && (isset($queryBody) && preg_match("/ ownerpub\s*=/i", $queryBody)))
             $ignoreOwnerpub = true;
 
         if ($ignoreSystem && $ignoreOwnerpub)

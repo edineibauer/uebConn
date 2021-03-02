@@ -70,6 +70,7 @@ class Read extends Conn
      */
     public function exeRead($tabela, $termos = null, $parseString = null, $ignoreSystem = null, $ignoreOwnerpub = null)
     {
+        $this->places = null;
         $this->setTabela($tabela);
         $isCache = substr( $this->tabela, strlen(PRE), 7) === "wcache_";
         $info = Metadados::getInfo(str_replace([PRE, "wcache_"], "", $this->tabela));

@@ -20,6 +20,7 @@ class Read extends Conn
     private $tabela;
     private $ignoreSystem;
     private $ignoreOwner;
+    private $ignorePermission;
 
     /** @var PDOStatement */
     private $read;
@@ -31,10 +32,11 @@ class Read extends Conn
      * Read constructor.
      * @param bool $ignoreSystem
      */
-    public function __construct(bool $ignoreSystem = false, bool $ignoreOwner = false)
+    public function __construct(bool $ignoreSystem = false, bool $ignoreOwner = false, bool $ignorePermission = false)
     {
         $this->ignoreSystem = $ignoreSystem;
         $this->ignoreOwner = $ignoreOwner;
+        $this->ignorePermission = $ignorePermission;
     }
 
     /**
@@ -67,37 +69,51 @@ class Read extends Conn
      * @param STRING $termos = WHERE | ORDER | LIMIT :limit | OFFSET :offset
      * @param STRING $parseString = link={$link}&link2={$link2}
      * @param bool|null $ignoreSystem
+     * @param bool|null $ignoreOwnerpub
+     * @param bool|null $ignorePermission
      */
-    public function exeRead($tabela, $termos = null, $parseString = null, $ignoreSystem = null, $ignoreOwnerpub = null)
+    public function exeRead($tabela, $termos = null, $parseString = null, $ignoreSystem = null, $ignoreOwnerpub = null, $ignorePermission = null)
     {
         $this->places = null;
         $this->setTabela($tabela);
-        $isCache = substr( $this->tabela, strlen(PRE), 7) === "wcache_";
-        $info = Metadados::getInfo(str_replace([PRE, "wcache_"], "", $this->tabela));
 
-        if (!empty($parseString))
-            parse_str($parseString, $this->places);
+        if($ignorePermission)
+            $this->ignorePermission = true;
 
-        $termos = parent::getQueryWithSystemAndOwnerProtection($termos ?? "", $this->tabela, $info, $this->ignoreSystem || $ignoreSystem !== null, $this->ignoreOwner || $ignoreOwnerpub !== null);
-
-        if($isCache) {
-            $this->sql = "SELECT data FROM {$this->tabela} {$termos}";
+        if(!$this->ignorePermission && !\Config\Config::haveEntityPermissionRead($this->tabela)) {
+            $this->result = null;
+            $this->select = "*";
+            parent::setDefault();
 
         } else {
-            $entity = str_replace(PRE, '', $this->tabela);
-            if(empty($_SESSION['db']) || !in_array($entity, $_SESSION['db']))
-                $_SESSION['db'][] = $entity;
 
-            parent::addEntitysToSession($termos);
+            $isCache = substr( $this->tabela, strlen(PRE), 7) === "wcache_";
+            $info = Metadados::getInfo(str_replace([PRE, "wcache_"], "", $this->tabela));
 
-            if(!empty($info['password']) && $this->select === "*" && !empty($info['columns_readable']))
-                $this->select = implode(", ", $info['columns_readable']) . ($info['user'] === 1 ? ", usuarios_id" : ""). ($info['autor'] === 1 ? ", autorpub" : ""). ($info['autor'] === 2 ? ", ownerpub" : "");
+            if (!empty($parseString))
+                parse_str($parseString, $this->places);
 
-            $this->sql = "SELECT {$this->select} FROM {$this->tabela} {$termos}";
+            $termos = parent::getQueryWithSystemAndOwnerProtection($termos ?? "", $this->tabela, $info, $this->ignoreSystem || $ignoreSystem !== null, $this->ignoreOwner || $ignoreOwnerpub !== null);
+
+            if($isCache) {
+                $this->sql = "SELECT data FROM {$this->tabela} {$termos}";
+
+            } else {
+                $entity = str_replace(PRE, '', $this->tabela);
+                if(empty($_SESSION['db']) || !in_array($entity, $_SESSION['db']))
+                    $_SESSION['db'][] = $entity;
+
+                parent::addEntitysToSession($termos);
+
+                if(!empty($info['password']) && $this->select === "*" && !empty($info['columns_readable']))
+                    $this->select = implode(", ", $info['columns_readable']) . ($info['user'] === 1 ? ", usuarios_id" : ""). ($info['autor'] === 1 ? ", autorpub" : ""). ($info['autor'] === 2 ? ", ownerpub" : "");
+
+                $this->sql = "SELECT {$this->select} FROM {$this->tabela} {$termos}";
+            }
+
+            $this->select = "*";
+            $this->execute();
         }
-
-        $this->select = "*";
-        $this->execute();
     }
 
     /**

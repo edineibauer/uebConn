@@ -119,28 +119,34 @@ class Delete extends Conn
         $this->getSyntax();
         $this->Connect();
         try {
-            $this->delete->execute($this->places);
-            $this->result = true;
-
             if(!$this->isCache) {
                 $result = (is_array($this->resultsUpdates) && !empty($this->resultsUpdates[0]) ? $this->resultsUpdates[0] : []);
-
-                /**
-                 * Delete caches IDs
-                 */
-                $idList = "";
-                foreach ($this->resultsUpdates as $resultsUpdate)
-                    $idList .= (!empty($idList) ? ", " : "") . $resultsUpdate['id'];
-
-                if (!empty($idList)) {
-                    $cacheTable =  PRE . "wcache_" . str_replace(PRE, "", $this->tabela);
-                    $sql = new SqlCommand(!0);
-                    $sql->exeCommand("SELECT COUNT(*) as t FROM information_schema.tables WHERE table_schema = '" . DATABASE . "' AND table_name = '{$cacheTable}'");
-                    if($sql->getResult() && $sql->getResult()[0]['t'] == 1)
-                        $sql->exeCommand("DELETE FROM {$cacheTable} WHERE id IN (" . $idList . ")");
-                }
-
                 $this->react = new React("delete", str_replace(PRE, '', $this->tabela), $result, $result);
+                $react = $this->react->getResponse();
+                if(!empty($react["error"])) {
+                    self::setError($react["error"]);
+                } else {
+                    $this->delete->execute($this->places);
+                    $this->result = $this->resultsUpdates[0]["id"];
+
+                    /**
+                     * Delete caches IDs
+                     */
+                    $idList = "";
+                    foreach ($this->resultsUpdates as $resultsUpdate)
+                        $idList .= (!empty($idList) ? ", " : "") . $resultsUpdate['id'];
+
+                    if (!empty($idList)) {
+                        $cacheTable =  PRE . "wcache_" . str_replace(PRE, "", $this->tabela);
+                        $sql = new SqlCommand(!0);
+                        $sql->exeCommand("SELECT COUNT(*) as t FROM information_schema.tables WHERE table_schema = '" . DATABASE . "' AND table_name = '{$cacheTable}'");
+                        if($sql->getResult() && $sql->getResult()[0]['t'] == 1)
+                            $sql->exeCommand("DELETE FROM {$cacheTable} WHERE id IN (" . $idList . ")");
+                    }
+                }
+            } else {
+                $this->delete->execute($this->places);
+                $this->result = $this->resultsUpdates[0]["id"];
             }
         } catch (\PDOException $e) {
             $this->result = null;

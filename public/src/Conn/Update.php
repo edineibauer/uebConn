@@ -152,7 +152,7 @@ class Update extends Conn
         $this->connect();
         try {
             $this->update->execute(array_merge($this->dadosName, $this->places));
-            $this->result = true;
+            $this->result = $this->resultsUpdates[0]["id"];
 
             if(!$this->isCache) {
 
@@ -179,7 +179,22 @@ class Update extends Conn
                         $this->dados[$col] = $value;
                 }
 
+                /**
+                 * Executa reação, e caso tenha um erro, passa erro para a classe e desfaz update
+                 */
                 $this->react = new React("update", str_replace(PRE, '', $this->tabela), $this->dados, $this->resultsUpdates[0] ?? []);
+                $react = $this->react->getResponse();
+                if(!empty($react["error"])) {
+                    $this->result = null;
+                    self::setError($react["error"]);
+                    $sql = new SqlCommand(true, true);
+                    $setSql = "";
+                    foreach ($this->resultsUpdates[0] as $field => $value)
+                        $setSql .= (!empty($setSql) ? ", " : "") .  "'{$field}' = '{$value}'";
+
+                    $sql->exeCommand("UPDATE " . $this->tabela . " SET {$setSql} WHERE id = {$this->resultsUpdates[0]["id"]}");
+                }
+
             }
         } catch (\PDOException $e) {
             $this->result = null;

@@ -33,7 +33,12 @@ class Create extends Conn
      */
     public function getErro()
     {
-        return self::getError();
+        $error = self::getError();
+        if(empty($error)) {
+            $react = self::getReact();
+            $error = !empty($react["error"]) ? $react["error"] : "";
+        }
+        return $error;
     }
 
     /**
@@ -123,8 +128,15 @@ class Create extends Conn
             if(!$this->isCache) {
                 $read = new Read();
                 $read->exeRead($this->tabela, "WHERE id = :id", "id={$this->result}", !0, !0, !0);
-                if ($read->getResult())
+                if ($read->getResult()) {
                     $this->react = new React("create", str_replace(PRE, '', $this->tabela), $read->getResult()[0]);
+                    $react = $this->react->getResponse();
+                    if(!empty($react["error"])) {
+                        $sql = new SqlCommand(true, true);
+                        $sql->exeCommand("DELETE FROM " . $this->tabela . " WHERE id = {$this->result}");
+                        $this->result = null;
+                    }
+                }
             }
         } catch (\PDOException $e) {
             $this->result = null;

@@ -131,13 +131,14 @@ class Update extends Conn
     {
         $this->dadosName = [];
         foreach ($this->dados as $Key => $Value) {
-            $ValueSignal = substr($Value, 0, 1);
-            $ValueNumber = ((float)substr($Value, 1));
-            if((($ValueSignal . $ValueNumber) === $Value || ($ValueSignal . " " . $ValueNumber) === $Value) && in_array($ValueSignal, ["+", "-", "*", "/"])) {
-                $Places[] = "`{$Key}` = " . $Key . $Value;
+            $ValueSignal = substr(trim($Value), 0, 1);
+            $ValueNumber = ((float)substr(str_replace(" ", "", trim($Value)), 1));
+            if((($ValueSignal . $ValueNumber) === str_replace(" ", "", trim($Value))) && in_array($ValueSignal, ["+", "-", "*", "/"])) {
+                $Places[] = "`{$Key}` = " . ($ValueSignal === "/" && $ValueNumber == 0 ? 0 : $Key . " " . $ValueSignal . " " . $ValueNumber);
             } else {
-                $Places[] = "`{$Key}` = :" . str_replace('-', '_', \Helpers\Check::name($Key));
-                $this->dadosName[str_replace('-', '_', \Helpers\Check::name($Key))] = $Value;
+                $namePlace = str_replace('-', '_', \Helpers\Check::name($Key));
+                $Places[] = "`{$Key}` = :" . $namePlace;
+                $this->dadosName[$namePlace] = $Value;
             }
         }
 

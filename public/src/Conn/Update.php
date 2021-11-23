@@ -132,8 +132,8 @@ class Update extends Conn
         $this->dadosName = [];
         foreach ($this->dados as $Key => $Value) {
             $ValueSignal = substr(trim($Value), 0, 1);
-            $ValueNumber = ((float)substr(str_replace(" ", "", trim($Value)), 1));
-            if((($ValueSignal . $ValueNumber) === str_replace(" ", "", trim($Value))) && in_array($ValueSignal, ["+", "-", "*", "/"])) {
+            $ValueNumber = substr(str_replace(" ", "", trim($Value)), 1);
+            if(is_numeric($ValueNumber) && in_array($ValueSignal, ["+", "-", "*", "/"])) {
                 $Places[] = "`{$Key}` = " . ($ValueSignal === "/" && $ValueNumber == 0 ? 0 : $Key . " " . $ValueSignal . " " . $ValueNumber);
             } else {
                 $namePlace = str_replace('-', '_', \Helpers\Check::name($Key));

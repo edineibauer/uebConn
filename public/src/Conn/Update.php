@@ -24,7 +24,7 @@ class Update extends Conn
      */
     public function getErro()
     {
-        return $this->getErro();
+        return $this->error;
     }
 
     /**

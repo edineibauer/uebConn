@@ -280,15 +280,22 @@ abstract class Conn
                 $op->execute(array_merge($places, $placesData));
 
                 /**
-                 * Executa a reação
+                 * Executa a reação para cada resultado da atualização
                  */
-                $react = new React("update", $table, $dadosAfter, $dadosBefore);
-                $react = $react->getResponse();
+                $reactError = false;
+                foreach ($dadosBefore as $indice => $item) {
+                    $react = new React("update", $table, $dadosAfter[$indice], $item);
+                    $react = $react->getResponse();
 
-                if (!empty($react["error"]))
-                    self::setError($conn, $react["error"]);
-                else
-                    self::setResult($conn, $dadosAfter, self::$rowCount, $react["data"]);
+                    if (!empty($react["error"])) {
+                        $reactError = true;
+                        self::setError($conn, $react["error"]);
+                        break;
+                    }
+                }
+
+                if (!$reactError)
+                    self::setResult($conn, $dadosAfter, self::$rowCount, (!empty($react["data"]) ? $react["data"] : null));
 
             } catch (\PDOException $e) {
                 self::error("<b>Erro ao Atualizar:</b> {$e->getMessage()}", $e->getCode());
@@ -319,13 +326,20 @@ abstract class Conn
                 /**
                  * Executa a reação
                  */
-                $react = new React("delete", $table, $dadosBefore, $dadosBefore);
-                $react = $react->getResponse();
+                $reactError = false;
+                foreach ($dadosBefore as $item) {
+                    $react = new React("update", $table, $item, $item);
+                    $react = $react->getResponse();
 
-                if (!empty($react["error"]))
-                    self::setError($conn, $react["error"]);
-                else
-                    self::setResult($conn, $dadosBefore, self::$rowCount, $react["data"]);
+                    if (!empty($react["error"])) {
+                        $reactError = true;
+                        self::setError($conn, $react["error"]);
+                        break;
+                    }
+                }
+
+                if (!$reactError)
+                    self::setResult($conn, $dadosAfter, self::$rowCount, (!empty($react["data"]) ? $react["data"] : null));
 
             } catch (\PDOException $e) {
                 self::error("<b>Erro ao Excluir:</b> {$e->getMessage()}", $e->getCode());

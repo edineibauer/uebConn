@@ -4,145 +4,78 @@
  * <b>Create:</b>
  * Classe responsável por cadastros genéricos no banco de dados!
  *
- * @copyright (c) 2017, Edinei J. Bauer
+ * @copyright (c) 2021, Edinei J. Bauer
  */
 
 namespace Conn;
 
+use Entity\Meta;
 use Entity\Metadados;
-use Entity\React;
 
 class Create extends Conn
 {
-    //teste
-    private $tabela;
-    private $dados;
-    private $dadosName;
     private $result;
     private $react;
-    private $isCache;
+    private $rowCount;
+    private $error;
 
-    /** @var PDOStatement */
-    private $create;
-
-    /** @var PDO */
-    private $conn;
-
-    /**
-     * @return mixed
-     */
-    public function getErro()
-    {
-        $error = self::getError();
-        if(empty($error)) {
-            $react = self::getReact();
-            $error = !empty($react["error"]) ? $react["error"] : "";
-        }
-        return $error;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getReact()
-    {
-        return ($this->react ? $this->react->getResponse() : null);
-    }
-
-    /**
-     * <b>ExeCreate:</b> Executa um cadastro simplificado no banco de dados utilizando prepared statements.
-     * Basta informar o nome da tabela e um array atribuitivo com nome da coluna e valor!
-     *
-     * @param STRING $tabela = Informe o nome da tabela no banco!
-     * @param ARRAY $dados = Informe um array atribuitivo. ( Nome Da Coluna => Valor ).
-     */
-    public function exeCreate($tabela, array $dados)
-    {
-        $this->setTabela($tabela);
-        $this->isCache = substr( $this->tabela, strlen(PRE), 7) === "wcache_";
-        $this->dados = $dados;
-        $info = Metadados::getInfo(str_replace([PRE, "wcache_"], "", $this->tabela));
-
-        $this->dados['system_id'] = (empty($this->dados['system_id']) ? (!empty($_SESSION['userlogin']['setorData']['system_id']) ? $_SESSION['userlogin']['setorData']['system_id'] : null) : $this->dados['system_id']);
-
-        if($this->isCache) {
-            $this->dados['ownerpub'] = ($info['autor'] === 2 ? (empty($this->dados['ownerpub']) ? (!empty($_SESSION['userlogin']['id']) ? $_SESSION['userlogin']['id'] : null) : $this->dados['ownerpub']) : null);
-
-        } else {
-            if ($info['autor'] === 2)
-                $this->dados['ownerpub'] = (empty($this->dados['ownerpub']) ? (!empty($_SESSION['userlogin']['id']) ? $_SESSION['userlogin']['id'] : null) : $this->dados['ownerpub']);
-            elseif ($info['autor'] === 1)
-                $this->dados['autorpub'] = (empty($this->dados['autorpub']) ? (!empty($_SESSION['userlogin']['id']) ? $_SESSION['userlogin']['id'] : null) : $this->dados['autorpub']);
-        }
-
-        $this->execute();
-    }
-
-    /**
-     * <b>Obter resultado:</b> Retorna o ID do registro inserido ou FALSE caso nem um registro seja inserido!
-     * @return INT $Variavel = lastInsertId OR FALSE
-     */
     public function getResult()
     {
         return $this->result;
     }
 
+    public function getRowCount()
+    {
+        return $this->rowCount;
+    }
+
+    public function getErro()
+    {
+        return $this->error;
+    }
+
+    public function getReact()
+    {
+        return ["data" => $this->react, "response" => (!empty($this->error) ? 2 : 1) , "error" => $this->error];
+    }
+
     /**
-     * ****************************************
-     * *********** PRIVATE METHODS ************
-     * ****************************************
+     * @param $table
+     * @param array $dados
+     * @return void
      */
-
-    private function setTabela($tabela)
+    public function exeCreate($table, array $dados)
     {
-        $this->tabela = (defined('PRE') && !preg_match('/^' . PRE . '/', $tabela) && parent::getDatabase() === DATABASE ? PRE . $tabela : $tabela);
-    }
+        $info = Metadados::getInfo($table);
+        $meta = Metadados::getDicionario($table);
 
-    //Obtém o PDO e Prepara a query
-    private function connect()
-    {
-        $this->conn = parent::getConn();
-        $this->create = $this->conn->prepare($this->create);
-    }
-
-    //Cria a sintaxe da query para Prepared Statements
-    private function getSyntax()
-    {
-        $Fileds = "`" . implode("`, `", array_keys($this->dados)) . "`";
-        $this->dadosName = [];
-        foreach ($this->dados as $key => $dado)
-            $this->dadosName[str_replace('-', '_', \Helpers\Check::name($key))] = $dado;
-
-        $this->create = "INSERT INTO {$this->tabela} ({$Fileds}) VALUES (:" . implode(', :', array_keys($this->dadosName)) . ")";
-    }
-
-    //Obtém a Conexão e a Syntax, executa a query!
-    private function execute()
-    {
-        $this->getSyntax();
-        $this->connect();
-        try {
-            $this->create->execute($this->dadosName);
-            $this->result = $this->conn->lastInsertId();
-
-            if(!$this->isCache) {
-                $read = new Read();
-                $read->exeRead($this->tabela, "WHERE id = :id", "id={$this->result}", !0, !0, !0);
-                if ($read->getResult()) {
-                    $this->react = new React("create", str_replace(PRE, '', $this->tabela), $read->getResult()[0]);
-                    $react = $this->react->getResponse();
-                    if(!empty($react["error"])) {
-                        $sql = new SqlCommand(true, true);
-                        $sql->exeCommand("DELETE FROM " . $this->tabela . " WHERE id = {$this->result}");
-                        $this->result = null;
-                    }
+        foreach ($meta as $item) {
+            if(!isset($dados[$item["column"]])) {
+                if($item["default"] !== false) {
+                    $dados[$item["column"]] = !empty($item["default"]) ? $item["default"] : null;
+                } else {
+                    $this->error = "Coluna '{$item["column"]}' obrigatória";
+                    return;
                 }
             }
-        } catch (\PDOException $e) {
-            $this->result = null;
-            self::setError("<b>Erro ao cadastrar: ({$this->tabela})</b> {$e->getMessage()}");
         }
 
-        parent::setDefault();
+        $dados['system_id'] = (empty($dados['system_id']) ? (!empty($_SESSION['userlogin']['setorData']['system_id']) ? $_SESSION['userlogin']['setorData']['system_id'] : null) : $dados['system_id']);
+
+        if ($info['autor'] === 2)
+            $dados['ownerpub'] = (empty($dados['ownerpub']) ? (!empty($_SESSION['userlogin']['id']) ? $_SESSION['userlogin']['id'] : null) : $dados['ownerpub']);
+        elseif ($info['autor'] === 1)
+            $dados['autorpub'] = (empty($dados['autorpub']) ? (!empty($_SESSION['userlogin']['id']) ? $_SESSION['userlogin']['id'] : null) : $dados['autorpub']);
+
+        $Fileds = "`" . implode("`, `", array_keys($dados)) . "`";
+        $places = [];
+        foreach ($dados as $key => $dado)
+            $places[str_replace('-', '_', \Helpers\Check::name($key))] = $dado;
+
+
+        $sql = "INSERT INTO {$table} ({$Fileds}) VALUES (:" . implode(', :', array_keys($places)) . ")";
+
+        list($this->result, $this->react, $this->rowCount, $this->error) = parent::exeSql("create", $table, $sql, $places, $dados);
     }
+
 }

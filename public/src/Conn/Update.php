@@ -14,68 +14,17 @@ use Entity\React;
 
 class Update extends Conn
 {
-    private $tabela;
-    private $dados;
-    private $dadosName;
-    private $termos;
-    private $places;
     private $result;
     private $react;
-    private $resultsUpdates;
-    private $isCache;
-
-    /** @var PDOStatement */
-    private $update;
-
-    /** @var PDO */
-    private $conn;
+    private $rowCount;
+    private $error;
 
     /**
      * @return mixed
      */
     public function getErro()
     {
-        return self::getError();
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getReact()
-    {
-        return ($this->react ? $this->react->getResponse() : null);
-    }
-
-    /**
-     * <b>Exe Update:</b> Executa uma atualização simplificada com Prepared Statments. Basta informar o
-     * nome da tabela, os dados a serem atualizados em um Attay Atribuitivo, as condições e uma
-     * analize em cadeia (ParseString) para executar.
-     * @param STRING $tabela = Nome da tabela
-     * @param ARRAY $dados = [ NomeDaColuna ] => Valor ( Atribuição )
-     * @param STRING $termos = WHERE coluna = :link AND.. OR..
-     * @param STRING $parseString = link={$link}&link2={$link2}
-     */
-    public function exeUpdate(string $tabela, array $dados, string $termos, $parseString = null)
-    {
-        $this->setTabela($tabela);
-        $this->isCache = substr( $this->tabela, strlen(PRE), 7) === "wcache_";
-
-        if(!$this->isCache) {
-            $read = new Read();
-            $read->exeRead($tabela, $termos, $parseString, !0, !0, !0);
-            if($read->getResult())
-                $this->resultsUpdates = $read->getResult();
-        }
-
-        $this->dados = $dados;
-        $this->termos = (string)$termos;
-
-        if (!empty($parseString))
-            parse_str($parseString, $this->places);
-        else
-            $this->places = [];
-
-        $this->execute();
+        return $this->getErro();
     }
 
     /**
@@ -94,114 +43,42 @@ class Update extends Conn
      */
     public function getRowCount()
     {
-        return $this->update->rowCount();
+        return $this->rowCount;
+    }
+
+    public function getReact()
+    {
+        return ["data" => $this->react, "response" => (!empty($this->error) ? 2 : 1) , "error" => $this->error];
     }
 
     /**
-     * <b>Modificar Links:</b> Método pode ser usado para atualizar com Stored Procedures. Modificando apenas os valores
-     * da condição. Use este método para editar múltiplas linhas!
-     * @param STRING $ParseString = id={$id}&..
+     * @param string $table
+     * @param array $dados
+     * @param string $termos
+     * @param $places
+     * @return void
      */
-    public function setPlaces(string $ParseString)
+    public function exeUpdate(string $table, array $dados, string $termos, $places = [])
     {
-        parse_str($ParseString, $this->places);
-        $this->execute();
-    }
+        if (!empty($places) && is_string($places))
+            parse_str($places, $places);
 
-    /**
-     * ****************************************
-     * *********** PRIVATE METHODS ************
-     * ****************************************
-     */
-
-    private function setTabela($tabela)
-    {
-        $this->tabela = (defined('PRE') && !preg_match('/^' . PRE . '/', $tabela) && parent::getDatabase() === DATABASE ? PRE . $tabela : $tabela);
-    }
-
-    //Obtém o PDO e Prepara a query
-    private function connect()
-    {
-        $this->conn = parent::getConn();
-        $this->update = $this->conn->prepare($this->update);
-    }
-
-    //Cria a sintaxe da query para Prepared Statements
-    private function getSyntax()
-    {
-        $this->dadosName = [];
-        foreach ($this->dados as $Key => $Value) {
+        $sqlSet = [];
+        foreach ($dados as $Key => $Value) {
             $ValueSignal = substr(trim($Value), 0, 1);
             $ValueNumber = substr(str_replace(" ", "", trim($Value)), 1);
+
+            $namePlace = str_replace('-', '_', \Helpers\Check::name($Key));
             if(is_numeric($ValueNumber) && in_array($ValueSignal, ["+", "-", "*", "/"])) {
-                $Places[] = "`{$Key}` = " . ($ValueSignal === "/" && $ValueNumber == 0 ? 0 : $Key . " " . $ValueSignal . " " . $ValueNumber);
+                $ValueNumber = ($ValueSignal === "/" && $ValueNumber == 0 ? 1 : $ValueNumber);
+                $sqlSet[] = "`{$Key}` = " . $Key . " " . $ValueSignal . ":" . $namePlace;
             } else {
-                $namePlace = str_replace('-', '_', \Helpers\Check::name($Key));
-                $Places[] = "`{$Key}` = :" . $namePlace;
-                $this->dadosName[$namePlace] = $Value;
+                $sqlSet[] = "`{$Key}` = :" . $namePlace;
             }
         }
 
-        $Places = implode(', ', $Places);
-        $this->update = "UPDATE {$this->tabela} SET {$Places} {$this->termos}";
-    }
+        $sql = "UPDATE {$table} SET " . implode(', ', $sqlSet) . " {$termos}";
 
-    //Obtém a Conexão e a Syntax, executa a query!
-    private function execute()
-    {
-        $this->getSyntax();
-        $this->connect();
-        try {
-            $this->update->execute(array_merge($this->dadosName, $this->places));
-            $this->result = $this->resultsUpdates[0]["id"];
-
-            if(!$this->isCache) {
-
-                /**
-                 * Delete caches IDs
-                 */
-                $idList = "";
-                foreach ($this->resultsUpdates as $resultsUpdate)
-                    $idList .= (!empty($idList) ? ", " : "") . $resultsUpdate['id'];
-
-                if (!empty($idList)) {
-                    $cacheTable =  PRE . "wcache_" . str_replace(PRE, "", $this->tabela);
-                    $sql = new SqlCommand(!0);
-                    $sql->exeCommand("SELECT COUNT(*) as t FROM information_schema.tables WHERE table_schema = '" . DATABASE . "' AND table_name = '{$cacheTable}'");
-                    if($sql->getResult() && $sql->getResult()[0]['t'] == 1)
-                        $sql->exeCommand("DELETE FROM {$cacheTable} WHERE id IN (" . $idList . ")");
-                }
-
-                /**
-                 * Garante que todos os campos estejam presentes nos dados
-                 */
-                foreach ($this->resultsUpdates[0] as $col => $value) {
-                    if (!isset($this->dados[$col]))
-                        $this->dados[$col] = $value;
-                }
-
-                /**
-                 * Executa reação, e caso tenha um erro, passa erro para a classe e desfaz update
-                 */
-                $this->react = new React("update", str_replace(PRE, '', $this->tabela), $this->dados, $this->resultsUpdates[0] ?? []);
-                $react = $this->react->getResponse();
-                if(!empty($react["error"])) {
-                    $this->result = null;
-                    self::setError($react["error"]);
-                    $sql = new SqlCommand(true, true);
-                    $setSql = "";
-                    foreach ($this->resultsUpdates[0] as $field => $value)
-                        $setSql .= (!empty($setSql) ? ", " : "") .  "'{$field}' = '{$value}'";
-
-                    $sql->exeCommand("UPDATE " . $this->tabela . " SET {$setSql} WHERE id = {$this->resultsUpdates[0]["id"]}");
-                }
-
-            }
-        } catch (\PDOException $e) {
-            $this->result = null;
-            self::setError("<b>(Update) Erro ao Ler: ({$this->tabela})</b> {$e->getMessage()}");
-        }
-
-        parent::setDefault();
+        list($this->result, $this->react, $this->rowCount, $this->error) = self::exeSql("update", $table, $sql, $places, $dados);
     }
 }

@@ -12,6 +12,7 @@ namespace Conn;
 
 use Entity\Metadados;
 use Config\Config;
+use Entity\React;
 
 abstract class Conn
 {
@@ -20,6 +21,9 @@ abstract class Conn
     private static $pass = PASS ?? null;
     private static $database = DATABASE ?? null;
     private static $error = "";
+    private static $result = "";
+    private static $reactData = "";
+    private static $rowCount = 0;
 
     /** @var PDO */
     private static $connect = null;
@@ -60,15 +64,28 @@ abstract class Conn
     /**
      * @param string $error
      */
-    public static function setError(string $error) {
+    public static function setError($conn, string $error)
+    {
         self::$error = $error;
+        self::$result = null;
+        $conn->rollBack();
     }
 
     /**
-     * @return string
+     * @param $conn
+     * @param $result
+     * @param int $rowCount
+     * @return void
      */
-    public static function getError(): string {
-        return self::$error;
+    public static function setResult($conn, $result = null, int $rowCount = 0, $reactData = null)
+    {
+        self::$result = $result;
+        self::$reactData = $reactData;
+        self::$rowCount = $rowCount;
+        self::$error = "";
+
+        if($conn)
+            $conn->commit();
     }
 
     /**
@@ -79,32 +96,27 @@ abstract class Conn
         return self::$database;
     }
 
-    /**
-     * Conecta com o banco de dados com o pattern singleton.
-     * Retorna um objeto PDO!
-     */
-    private static function conectar()
-    {
-        try {
-            if (self::$connect == null):
-                $dsn = 'mysql:host=' . self::$host . ';dbname=' . self::$database;
-                $options = [\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES UTF8'];
-                self::$connect = new \PDO($dsn, self::$user, self::$pass, $options);
-            endif;
-        } catch (\PDOException $e) {
-            self::error("<b>Erro ao se conectar ao Banco</b><br><br> #Linha: {$e->getLine()}<br> {$e->getMessage()}", $e->getCode());
-            die;
-        }
-
-        self::$connect->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        return self::$connect;
-    }
-
     /** Retorna um objeto PDO Singleton Pattern. */
     protected static function getConn()
     {
-        self::setError("");
-        return self::conectar();
+        self::$error = "";
+
+        try {
+            if (self::$connect == null) {
+                $dsn = 'mysql:host=' . self::$host . ';dbname=' . self::$database;
+                $options = [
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                    \PDO::ATTR_PERSISTENT => FALSE,
+                    \PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => TRUE,
+                    \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES UTF8, @@sql_mode = STRICT_ALL_TABLES, @@foreign_key_checks = 1'
+                ];
+                self::$connect = new \PDO($dsn, self::$user, self::$pass, $options);
+            }
+        } catch (\PDOException $e) {
+            self::error("<b>Erro ao se conectar ao Banco</b><br><br> #Linha: {$e->getLine()}<br> {$e->getMessage()}", $e->getCode());
+        }
+
+        return self::$connect;
     }
 
     protected static function setDefault()
@@ -115,168 +127,265 @@ abstract class Conn
         self::setPass(PASS ?? null);
     }
 
+    /**
+     * @param string $action
+     * @param string $table
+     * @param string $sql
+     * @param array $places
+     * @param array $dados
+     * @return array
+     */
+    protected static function exeSql(string $action, string $table = null, string $sql = null, array $places = [], array $dados = []): array
+    {
+        switch ($action) {
+            case "sql":
+                self::exeSqlFree($sql);
+                break;
+            case "read":
+                self::exeSqlRead($sql, $places);
+                break;
+            case "update":
+                self::exeSqlUpdate($table, $sql, $places, $dados);
+                break;
+            case "delete":
+                self::exeSqlDelete($table, $sql, $places);
+                break;
+            case "create":
+                self::exeSqlCreate($table, $sql, $places, $dados);
+                break;
+        }
+
+        self::setDefault();
+
+        return [self::$result, self::$reactData, self::$rowCount, self::$error];
+    }
+
+    private static function operation($val1, $operation, $val2)
+    {
+        switch ($operation) {
+            case "/":
+                return $val1 / $val2;
+                break;
+            case "*":
+                return $val1 * $val2;
+                break;
+            case "+":
+                return $val1 + $val2;
+                break;
+            case "-":
+                return $val1 - $val2;
+                break;
+        }
+    }
+
+    /**
+     * @param string $sql
+     * @param array $places
+     * @return void
+     */
+    private static function exeSqlFree(string $sql)
+    {
+        try {
+            /**
+             * Executa a operação no banco
+             */
+            $conn = self::getConn();
+            $conn->beginTransaction();
+            $op = $conn->prepare($sql);
+            $op->execute($places);
+            self::setResult($conn, 1, 1);
+
+        } catch (\PDOException $e) {
+            self::error("<b>Erro ao Ler:</b> {$e->getMessage()}", $e->getCode());
+        }
+    }
+
+    /**
+     * @param string $sql
+     * @param array $places
+     * @return void
+     */
+    private static function exeSqlRead(string $sql, array $places = [])
+    {
+        try {
+            /**
+             * Executa a operação no banco
+             */
+            $conn = self::getConn();
+            $op = $conn->prepare($sql);
+
+            if (!empty($places)) {
+                foreach ($places as $Vinculo => $Valor) {
+                    if ($Vinculo == 'limit' || $Vinculo == 'offset')
+                        $Valor = (int)$Valor;
+
+                    $op->bindValue(":{$Vinculo}", $Valor, (is_int($Valor) ? \PDO::PARAM_INT : \PDO::PARAM_STR));
+                }
+            }
+
+            $op->setFetchMode(\PDO::FETCH_ASSOC);
+            $op->execute($places);
+
+            self::setResult(null, $op->fetchAll(), $op->rowCount());
+
+        } catch (\PDOException $e) {
+            self::error("<b>Erro ao Ler:</b> {$e->getMessage()}", $e->getCode());
+        }
+    }
+
+    /**
+     * @param string $table
+     * @param string $sql
+     * @param array $places
+     * @param array $dados
+     * @return void
+     */
+    private static function exeSqlUpdate(string $table, string $sql = null, array $places = [], array $dados = [])
+    {
+        $dadosBefore = self::readExeSql($table, (!empty($sql) ? "WHERE " . explode("WHERE ", $sql)[1] : ""), $places);
+        if (count($dadosBefore) > 0) {
+
+            try {
+
+                /**
+                 * Executa a operação no banco
+                 */
+                $conn = self::getConn();
+                $conn->beginTransaction();
+                $op = $conn->prepare($sql);
+                $dadosAfter = $dadosBefore;
+
+                $placesData = [];
+                foreach ($dados as $Key => $Value) {
+                    $ValueSignal = substr(trim($Value), 0, 1);
+                    $ValueNumber = substr(str_replace(" ", "", trim($Value)), 1);
+
+                    $namePlace = str_replace('-', '_', \Helpers\Check::name($Key));
+                    if (is_numeric($ValueNumber) && in_array($ValueSignal, ["+", "-", "*", "/"])) {
+                        $ValueNumber = ($ValueSignal === "/" && $ValueNumber == 0 ? 1 : $ValueNumber);
+                        $sqlSet[] = "`{$Key}` = " . $Key . " " . $ValueSignal . ":" . $namePlace;
+                        $placesData[$namePlace] = $ValueNumber;
+
+                        foreach ($dadosAfter as $i => $dadosTable)
+                            $dadosAfter[$i][$Key] = self::operation($dadosBefore[$i][$Key], $ValueSignal, $ValueNumber);
+
+                    } else {
+                        $placesData[$namePlace] = $Value;
+
+                        foreach ($dadosAfter as $i => $dadosTable)
+                            $dadosAfter[$i][$Key] = $Value;
+                    }
+                }
+
+                $op->execute(array_merge($places, $placesData));
+
+                /**
+                 * Executa a reação
+                 */
+                $react = new React("update", $table, $dadosAfter, $dadosBefore);
+                $react = $react->getResponse();
+
+                if (!empty($react["error"]))
+                    self::setError($conn, $react["error"]);
+                else
+                    self::setResult($conn, $dadosAfter, self::$rowCount, $react["data"]);
+
+            } catch (\PDOException $e) {
+                self::error("<b>Erro ao Atualizar:</b> {$e->getMessage()}", $e->getCode());
+            }
+        }
+    }
+
+    /**
+     * @param string $table
+     * @param string $sql
+     * @param array $places
+     * @return void
+     */
+    private static function exeSqlDelete(string $table, string $sql = null, array $places = [])
+    {
+        $dadosBefore = self::readExeSql($table, (!empty($sql) ? "WHERE " . explode("WHERE ", $sql)[1] : ""), $places);
+        if (count($dadosBefore) > 0) {
+            try {
+
+                /**
+                 * Executa a operação no banco
+                 */
+                $conn = self::getConn();
+                $conn->beginTransaction();
+                $op = $conn->prepare($sql);
+                $op->execute($places);
+
+                /**
+                 * Executa a reação
+                 */
+                $react = new React("delete", $table, $dadosBefore, $dadosBefore);
+                $react = $react->getResponse();
+
+                if (!empty($react["error"]))
+                    self::setError($conn, $react["error"]);
+                else
+                    self::setResult($conn, $dadosBefore, self::$rowCount, $react["data"]);
+
+            } catch (\PDOException $e) {
+                self::error("<b>Erro ao Excluir:</b> {$e->getMessage()}", $e->getCode());
+            }
+        }
+    }
+
+    /**
+     * @param string $table
+     * @param string $sql
+     * @param array $places
+     * @param array $dados
+     * @return void
+     */
+    private static function exeSqlCreate(string $table, string $sql = null, array $places = [], array $dados = [])
+    {
+        try {
+
+            /**
+             * Executa a operação no banco
+             */
+            $conn = self::getConn();
+            $conn->beginTransaction();
+            $op = $conn->prepare($sql);
+            $op->execute($places);
+
+            /**
+             * Executa a reação
+             */
+            $react = new React("create", $table, $dados, []);
+            $react = $react->getResponse();
+
+            if (!empty($react["error"]))
+                self::setError($conn, $react["error"]);
+            else
+                self::setResult($conn, $conn->lastInsertId(), 1, $react["data"]);
+
+        } catch (\PDOException $e) {
+            self::error("<b>Erro ao Criar:</b> {$e->getMessage()}", $e->getCode());
+        }
+    }
+
+    /**
+     * @param string $table
+     * @param string|null $sql
+     * @param array $places
+     * @return array
+     */
+    private static function readExeSql(string $table, string $sql = null, array $places = []): array
+    {
+        $read = new Read();
+        $read->exeRead($table, $sql, $places);
+        return $read->getResult();
+    }
+
     protected static function error($ErrMsg, $ErrNo = null)
     {
         $color = ["blue" => "lightskyblue", "yellow" => "gold", "green" => "steal", "red" => "lightcoral", "orange" => "orange"];
         $background = ($ErrNo == E_USER_NOTICE ? $color["blue"] : ($ErrNo == E_USER_WARNING ? $color['yellow'] : ($ErrNo == E_USER_ERROR ? $color['red'] : $color['orange'])));
         echo "<p style='width: 100%;float:left;clear:both; padding:10px 30px; background: {$background}; border-radius: 4px; font-weight: bold; box-shadow: 1px 4px 9px -2px rgba(0, 0, 0, 0.15); text-transform: uppercase; width: auto' >{$ErrMsg}</p>";
-    }
-
-    /**
-     * Check if have read commando on query, if have
-     * add all table read name on SESSION
-     *
-     * @param string|null $queryCommand
-     */
-    protected static function addEntitysToSession(string $queryCommand = null)
-    {
-        if(empty($queryCommand))
-            return;
-
-        $from = explode(" FROM ", $queryCommand);
-        if (!empty($from[1])) {
-            foreach ($from as $i => $tableName) {
-                if($i === 0)
-                    continue;
-
-                $entityToAdd = (!empty(PRE) ? preg_replace('/'.preg_quote(PRE, '/').'/', '', explode(" ", $tableName)[0], 1) : explode(" ", $tableName)[0]);
-                if(empty($_SESSION['db']) || !in_array($entityToAdd, $_SESSION['db']))
-                    $_SESSION['db'][] = $entityToAdd;
-            }
-        }
-
-        $from = explode(" JOIN ", $queryCommand);
-        if (!empty($from[1])) {
-            foreach ($from as $i => $tableName) {
-                if($i === 0)
-                    continue;
-
-                $entityToAdd = (!empty(PRE) ? preg_replace('/'.preg_quote(PRE, '/').'/', '', explode(" ", $tableName)[0], 1) : explode(" ", $tableName)[0]);
-                if(empty($_SESSION['db']) || !in_array($entityToAdd, $_SESSION['db']))
-                    $_SESSION['db'][] = $entityToAdd;
-            }
-        }
-    }
-
-    /**
-     * Aplica clausula WHERE padrão para consultas no banco
-     *
-     * @param string $queryCommand
-     * @param string $tabela
-     * @param array $info
-     * @param bool $ignoreSystem
-     * @param bool $ignoreOwnerpub
-     * @return string
-     */
-    protected static function getQueryWithSystemAndOwnerProtection(string $queryCommand, string $tabela = "", array $info = [], bool $ignoreSystem = false, bool $ignoreOwnerpub = false): string
-    {
-        $setor = Config::getSetor();
-        $ignoreSystem = ($ignoreSystem || $setor === "admin" || empty($_SESSION['userlogin']['system_id']));
-        $ignoreOwnerpub = ($ignoreOwnerpub || $setor === "admin");
-
-        if ($ignoreSystem && $ignoreOwnerpub)
-            return $queryCommand;
-
-        $queryLogic = explode("WHERE ", $queryCommand);
-
-        if(isset($queryLogic[1]))
-            $queryBody = " " . explode(" GROUP BY ", $queryLogic[1])[0];
-
-        if(!$ignoreSystem && (empty($_SESSION['userlogin']['system_id']) || (isset($queryBody) && preg_match("/ system_id\s*=/i", $queryBody))))
-            $ignoreSystem = true;
-
-        if(!$ignoreOwnerpub && (isset($queryBody) && preg_match("/ ownerpub\s*=/i", $queryBody)))
-            $ignoreOwnerpub = true;
-
-        if ($ignoreSystem && $ignoreOwnerpub)
-            return $queryCommand;
-
-        /**
-         * SqlCommand not send the table, so search for it
-         */
-        $prefix = "";
-        $system = "system_id";
-        if (empty($tabela)) {
-            $from = explode("FROM ", $queryCommand);
-            if (!empty($from[1])) {
-                $tabela = explode(" ", $from[1])[0];
-
-                if (!empty($tabela) && preg_match("/FROM {$tabela} as /i", $queryCommand)) {
-                    $prefix = explode(" ", explode("FROM {$tabela} as ", $queryCommand)[1])[0];
-                    $prefix = !empty($prefix) ? $prefix . "." : "";
-                    $system = $prefix . "system_id";
-                }
-            }
-        }
-
-        /**
-         * Check for read permission to this user
-         */
-        $permissoes = Config::getPermission();
-        if(isset($permissoes[$setor][$tabela]['read']) && !$permissoes[$setor][$tabela]['read']) {
-            self::$error = $setor . " não tem permissão de leitura em " . $tabela;
-            return (empty($tabela) ? "SELECT * FROM " . PRE . $tabela . " " : "") . "WHERE id < 0";
-        }
-
-        /**
-         * Se tiver tabela reconhecida
-         */
-        if (!empty($tabela)) {
-            if(empty($info))
-                $info = Metadados::getInfo(str_replace(PRE, "", $tabela));
-
-            $whereSetor = "";
-
-            /**
-             * where register setor like my setor
-             */
-            if (!empty($info['setor']))
-                $whereSetor = " {$prefix}{$info['setor']} = '{$setor}'";
-
-            /**
-             * where register owner like me
-             */
-            if(!$ignoreOwnerpub && !empty($info['autor']) && $info['autor'] === 2)
-                $whereSetor .= (empty($whereSetor) ? "" : " && ") . " {$prefix}ownerpub = '" . ($setor != "0" ? $_SESSION['userlogin']['id'] : "0") . "'";
-
-            if (!empty($info['system']) || !empty($whereSetor)) {
-                if (preg_match("/WHERE /i", $queryCommand)) {
-                    $command = "WHERE ";
-                    $query = explode($command, $queryCommand, 2);
-
-                } elseif (preg_match("/ GROUP BY /i", $queryCommand)) {
-                    $command = " GROUP BY ";
-                    $query = explode($command, $queryCommand, 2);
-
-                } elseif (preg_match("/ HAVING /i", $queryCommand)) {
-                    $command = " HAVING ";
-                    $query = explode($command, $queryCommand, 2);
-
-                } elseif (preg_match("/ ORDER BY /i", $queryCommand)) {
-                    $command = " ORDER BY ";
-                    $query = explode($command, $queryCommand, 2);
-
-                } elseif (preg_match("/ LIMIT /i", $queryCommand)) {
-                    $command = " LIMIT ";
-                    $query = explode($command, $queryCommand, 2);
-
-                } elseif (preg_match("/ OFFSET /i", $queryCommand)) {
-                    $command = " OFFSET ";
-                    $query = explode($command, $queryCommand, 2);
-                }
-
-                if(!empty($info['system']) && !$ignoreSystem)
-                    $whereSetor .= (!empty($whereSetor) ? " && " : "") . " ({$system} IS NULL || {$system} = ''" . ($setor != "0" ? " || {$system} = '{$_SESSION['userlogin']['system_id']}'" : "") . ")";
-
-                if (isset($command) && !empty($query[1])) {
-                    $haveWhere = $command === "WHERE ";
-                    $queryCommand = $query[0] . (!empty($whereSetor) ? " WHERE{$whereSetor}" . ($haveWhere ? " && " : " ") : ($haveWhere ? "WHERE " : "")) . (!$haveWhere ? $command : "") . $query[1];
-                } elseif(!empty($whereSetor)) {
-                    $queryCommand .= " WHERE{$whereSetor}";
-                }
-            }
-        }
-
-        return $queryCommand;
+        die;
     }
 }

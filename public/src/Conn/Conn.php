@@ -64,28 +64,24 @@ abstract class Conn
     /**
      * @param string $error
      */
-    public static function setError($conn, string $error)
+    public static function setError(string $error)
     {
         self::$error = $error;
         self::$result = null;
-        $conn->rollBack();
     }
 
     /**
-     * @param $conn
      * @param $result
      * @param int $rowCount
+     * @param $reactData
      * @return void
      */
-    public static function setResult($conn, $result = null, int $rowCount = 0, $reactData = null)
+    public static function setResult($result = null, int $rowCount = 0, $reactData = null)
     {
         self::$result = $result;
         self::$reactData = $reactData;
         self::$rowCount = $rowCount;
         self::$error = "";
-
-        if($conn)
-            $conn->commit();
     }
 
     /**
@@ -106,8 +102,6 @@ abstract class Conn
                 $dsn = 'mysql:host=' . self::$host . ';dbname=' . self::$database;
                 $options = [
                     \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-                    \PDO::ATTR_PERSISTENT => FALSE,
-                    \PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => TRUE,
                     \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES UTF8, @@sql_mode = STRICT_ALL_TABLES, @@foreign_key_checks = 1'
                 ];
                 self::$connect = new \PDO($dsn, self::$user, self::$pass, $options);
@@ -125,6 +119,10 @@ abstract class Conn
         self::setHost(HOST ?? null);
         self::setUser(USER ?? null);
         self::setPass(PASS ?? null);
+        self::$result = "";
+        self::$reactData = "";
+        self::$rowCount = 0;
+        self::$error = "";
     }
 
     /**
@@ -155,9 +153,11 @@ abstract class Conn
                 break;
         }
 
+        $dadosReturn = [self::$result, self::$reactData, self::$rowCount, self::$error];
+
         self::setDefault();
 
-        return [self::$result, self::$reactData, self::$rowCount, self::$error];
+        return $dadosReturn;
     }
 
     private static function operation($val1, $operation, $val2)
@@ -190,13 +190,13 @@ abstract class Conn
              * Executa a operação no banco
              */
             $conn = self::getConn();
-            $conn->beginTransaction();
             $op = $conn->prepare($sql);
-            $op->execute($places);
-            self::setResult($conn, 1, 1);
+            $op->execute();
+
+            self::setResult(1, 1);
 
         } catch (\PDOException $e) {
-            self::error("<b>Erro ao Ler:</b> {$e->getMessage()}", $e->getCode());
+            self::error("<b>Erro SQL:</b> {$e->getMessage()}", $e->getCode());
         }
     }
 
@@ -226,7 +226,7 @@ abstract class Conn
             $op->setFetchMode(\PDO::FETCH_ASSOC);
             $op->execute($places);
 
-            self::setResult(null, $op->fetchAll(), $op->rowCount());
+            self::setResult($op->fetchAll(), $op->rowCount());
 
         } catch (\PDOException $e) {
             self::error("<b>Erro ao Ler:</b> {$e->getMessage()}", $e->getCode());
@@ -251,7 +251,7 @@ abstract class Conn
                  * Executa a operação no banco
                  */
                 $conn = self::getConn();
-                $conn->beginTransaction();
+
                 $op = $conn->prepare($sql);
                 $dadosAfter = $dadosBefore;
 
@@ -289,13 +289,13 @@ abstract class Conn
 
                     if (!empty($react["error"])) {
                         $reactError = true;
-                        self::setError($conn, $react["error"]);
+                        self::setError($react["error"]);
                         break;
                     }
                 }
 
                 if (!$reactError)
-                    self::setResult($conn, $dadosAfter, self::$rowCount, (!empty($react["data"]) ? $react["data"] : null));
+                    self::setResult($dadosAfter, self::$rowCount, (!empty($react["data"]) ? $react["data"] : null));
 
             } catch (\PDOException $e) {
                 self::error("<b>Erro ao Atualizar:</b> {$e->getMessage()}", $e->getCode());
@@ -319,7 +319,6 @@ abstract class Conn
                  * Executa a operação no banco
                  */
                 $conn = self::getConn();
-                $conn->beginTransaction();
                 $op = $conn->prepare($sql);
                 $op->execute($places);
 
@@ -333,13 +332,13 @@ abstract class Conn
 
                     if (!empty($react["error"])) {
                         $reactError = true;
-                        self::setError($conn, $react["error"]);
+                        self::setError($react["error"]);
                         break;
                     }
                 }
 
                 if (!$reactError)
-                    self::setResult($conn, $dadosAfter, self::$rowCount, (!empty($react["data"]) ? $react["data"] : null));
+                    self::setResult($dadosAfter, self::$rowCount, (!empty($react["data"]) ? $react["data"] : null));
 
             } catch (\PDOException $e) {
                 self::error("<b>Erro ao Excluir:</b> {$e->getMessage()}", $e->getCode());
@@ -357,12 +356,10 @@ abstract class Conn
     private static function exeSqlCreate(string $table, string $sql = null, array $places = [], array $dados = [])
     {
         try {
-
             /**
              * Executa a operação no banco
              */
             $conn = self::getConn();
-            $conn->beginTransaction();
             $op = $conn->prepare($sql);
             $op->execute($places);
 
@@ -373,9 +370,9 @@ abstract class Conn
             $react = $react->getResponse();
 
             if (!empty($react["error"]))
-                self::setError($conn, $react["error"]);
+                self::setError($react["error"]);
             else
-                self::setResult($conn, $conn->lastInsertId(), 1, $react["data"]);
+                self::setResult($conn->lastInsertId(), 1, $react["data"]);
 
         } catch (\PDOException $e) {
             self::error("<b>Erro ao Criar:</b> {$e->getMessage()}", $e->getCode());

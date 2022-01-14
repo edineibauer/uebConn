@@ -78,7 +78,6 @@ class Update extends Conn
         }
 
         $sql = "UPDATE {$table} SET " . implode(', ', $sqlSet) . " {$termos}";
-
         list($this->result, $this->react, $this->rowCount, $this->error) = self::exeSql("update", $table, $sql, $places, $dados);
     }
 }

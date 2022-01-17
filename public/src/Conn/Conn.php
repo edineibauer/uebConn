@@ -258,7 +258,7 @@ abstract class Conn
                 $placesData = [];
                 foreach ($dados as $Key => $Value) {
                     $ValueSignal = substr(trim($Value), 0, 1);
-                    $ValueSignalSpace = substr(trim($Value), 1, 2) === " ";
+                    $ValueSignalSpace = substr(trim($Value), 1, 1) === " ";
                     $ValueNumber = substr(str_replace(" ", "", trim($Value)), 1);
 
                     $namePlace = str_replace('-', '_', \Helpers\Check::name($Key));

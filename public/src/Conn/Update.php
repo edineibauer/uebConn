@@ -66,12 +66,11 @@ class Update extends Conn
         $sqlSet = [];
         foreach ($dados as $Key => $Value) {
             $ValueSignal = substr(trim($Value), 0, 1);
-            $ValueSignalSpace = substr(trim($Value), 1, 2) === " ";
+            $ValueSignalSpace = substr(trim($Value), 1, 1) === " ";
             $ValueNumber = substr(str_replace(" ", "", trim($Value)), 1);
 
             $namePlace = str_replace('-', '_', \Helpers\Check::name($Key));
             if(is_numeric($ValueNumber) && (in_array($ValueSignal, ["+", "*", "/"]) || ($ValueSignal === "-" && $ValueSignalSpace))) {
-                $ValueNumber = ($ValueSignal === "/" && $ValueNumber == 0 ? 1 : $ValueNumber);
                 $sqlSet[] = "`{$Key}` = " . $Key . " " . $ValueSignal . ":" . $namePlace;
             } else {
                 $sqlSet[] = "`{$Key}` = :" . $namePlace;

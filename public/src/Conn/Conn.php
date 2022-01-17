@@ -258,10 +258,11 @@ abstract class Conn
                 $placesData = [];
                 foreach ($dados as $Key => $Value) {
                     $ValueSignal = substr(trim($Value), 0, 1);
+                    $ValueSignalSpace = substr(trim($Value), 1, 2) === " ";
                     $ValueNumber = substr(str_replace(" ", "", trim($Value)), 1);
 
                     $namePlace = str_replace('-', '_', \Helpers\Check::name($Key));
-                    if (is_numeric($ValueNumber) && in_array($ValueSignal, ["+", "-", "*", "/"])) {
+                    if(is_numeric($ValueNumber) && (in_array($ValueSignal, ["+", "*", "/"]) || ($ValueSignal === "-" && $ValueSignalSpace))) {
                         $ValueNumber = ($ValueSignal === "/" && $ValueNumber == 0 ? 1 : $ValueNumber);
                         $sqlSet[] = "`{$Key}` = " . $Key . " " . $ValueSignal . ":" . $namePlace;
                         $placesData[$namePlace] = $ValueNumber;
@@ -338,7 +339,7 @@ abstract class Conn
                 }
 
                 if (!$reactError)
-                    self::setResult($dadosAfter, self::$rowCount, (!empty($react["data"]) ? $react["data"] : null));
+                    self::setResult($dadosBefore, self::$rowCount, (!empty($react["data"]) ? $react["data"] : null));
 
             } catch (\PDOException $e) {
                 self::error("<b>Erro ao Excluir:</b> {$e->getMessage()}", $e->getCode());
@@ -362,6 +363,7 @@ abstract class Conn
             $conn = self::getConn();
             $op = $conn->prepare($sql);
             $op->execute($places);
+            $lastId = $conn->lastInsertId();
 
             /**
              * Executa a reação
@@ -372,7 +374,7 @@ abstract class Conn
             if (!empty($react["error"]))
                 self::setError($react["error"]);
             else
-                self::setResult($conn->lastInsertId(), 1, $react["data"]);
+                self::setResult($lastId, 1, (!empty($react["data"]) ? $react["data"] : null));
 
         } catch (\PDOException $e) {
             self::error("<b>Erro ao Criar:</b> {$e->getMessage()}", $e->getCode());

@@ -365,6 +365,8 @@ abstract class Conn
             $op->execute($places);
             $lastId = $conn->lastInsertId();
 
+            $dados = self::readExeSql($table, "WHERE id = {$lastId}")[0];
+
             /**
              * Executa a reação
              */

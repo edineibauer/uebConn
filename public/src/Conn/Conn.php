@@ -196,7 +196,7 @@ abstract class Conn
             self::setResult(1, 1);
 
         } catch (\PDOException $e) {
-            self::error("<b>Erro SQL:</b> {$e->getMessage()}", $e->getCode());
+            self::setError("<b>Erro no SQL:</b> " . $e->getMessage());
         }
     }
 
@@ -229,7 +229,7 @@ abstract class Conn
             self::setResult($op->fetchAll(), $op->rowCount());
 
         } catch (\PDOException $e) {
-            self::error("<b>Erro ao Ler:</b> {$e->getMessage()}", $e->getCode());
+            self::setError("<b>Erro ao Ler:</b> " . $e->getMessage());
         }
     }
 
@@ -299,7 +299,7 @@ abstract class Conn
                     self::setResult($dadosAfter, self::$rowCount, (!empty($react["data"]) ? $react["data"] : null));
 
             } catch (\PDOException $e) {
-                self::error("<b>Erro ao Atualizar:</b> {$e->getMessage()}", $e->getCode());
+                self::setError("<b>Erro ao Atualizar:</b> " . $e->getMessage());
             }
         }
     }
@@ -342,7 +342,7 @@ abstract class Conn
                     self::setResult($dadosBefore, self::$rowCount, (!empty($react["data"]) ? $react["data"] : null));
 
             } catch (\PDOException $e) {
-                self::error("<b>Erro ao Excluir:</b> {$e->getMessage()}", $e->getCode());
+                self::setError("<b>Erro ao Excluir:</b> " . $e->getMessage());
             }
         }
     }
@@ -379,7 +379,7 @@ abstract class Conn
                 self::setResult($lastId, 1, (!empty($react["data"]) ? $react["data"] : null));
 
         } catch (\PDOException $e) {
-            self::error("<b>Erro ao Criar:</b> {$e->getMessage()}", $e->getCode());
+            self::setError("<b>Erro ao Criar:</b> " . $e->getMessage());
         }
     }
 

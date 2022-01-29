@@ -55,7 +55,7 @@ class SqlCommand extends Conn
      */
     public function exeCommand(string $query, $ignoreSystem = null, $ignoreOwnerpub = null)
     {
-        $action = (preg_match('/^(SELECT|SHOW) /i', $query) ? "read" : "sql");
-        list($this->result, $react, $this->rowCount, $this->error) = self::exeSql($action, null, $query);
+        $action = (preg_match('/^(SELECT|SHOW) /i', trim($query)) ? "read" : "sql");
+        list($this->result, $react, $this->rowCount, $this->error) = self::exeSql($action, null, trim($query));
     }
 }

@@ -328,7 +328,7 @@ abstract class Conn
                  */
                 $reactError = false;
                 foreach ($dadosBefore as $item) {
-                    $react = new React("update", $table, $item, $item);
+                    $react = new React("delete", $table, $item, $item);
                     $react = $react->getResponse();
 
                     if (!empty($react["error"])) {

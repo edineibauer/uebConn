@@ -328,6 +328,90 @@ abstract class Conn
                  */
                 $reactError = false;
                 foreach ($dadosBefore as $item) {
+
+
+
+                    /**
+                     * Exclui este item de relações multiplas de outras entidades
+                     */
+                    if(!empty($g[$table]) && !empty($g[$table]["belongsTo"])) {
+                        foreach ($g[$table]["belongsTo"] as $ii => $belongsTo) {
+                            foreach ($belongsTo as $entity => $content) {
+
+                                //adiciona o formato e grupo ao general
+                                if(!isset($content["format"])) {
+                                    $gg = json_decode(file_get_contents(PATH_HOME . "entity/cache/{$entity}.json"), true);
+                                    foreach ($gg as $indice => $metadados) {
+                                        if($metadados["column"] !== $content["column"])
+                                            continue;
+
+                                        $content["format"] = $metadados["format"];
+                                        $content["group"] = $metadados["group"];
+                                        $g[$table]["belongsTo"][$ii][$entity]["format"] = $content["format"];
+                                        $g[$table]["belongsTo"][$ii][$entity]["group"] = $content["group"];
+
+                                        Config::createFile(PATH_HOME . "entity/general/general_info.json", json_encode($g));
+
+                                        break;
+                                    }
+                                }
+
+                                //exclui o item relacional da lista multipla
+                                if(!empty($content["format"]) && $content["format"] === "list_mult") {
+                                    self::exeSqlFree("
+                                        UPDATE {$entity} 
+                                        SET {$content["column"]} = JSON_REMOVE({$content["column"]}, replace(JSON_SEARCH({$content["column"]}, 'one', \"{$item["id"]}\"), '\"', '')) 
+                                        WHERE JSON_CONTAINS({$content["column"]}, '\"{$item["id"]}\"', '$')
+                                    ");
+
+                                    //exclui o valor também das tabelas que incluem essa entidade somente como referencia
+                                    //busca entidades que incluem esta entidade via extend_folder
+                                    if(!empty($g[$entity]) && !empty($g[$entity]["belongsTo"])) {
+                                        foreach ($g[$entity]["belongsTo"] as $ii2 => $belongsTo) {
+                                            foreach ($belongsTo as $entity2 => $content2) {
+
+                                                //adiciona o formato e grupo ao general
+                                                if(!isset($content2["format"])) {
+                                                    $gg = json_decode(file_get_contents(PATH_HOME . "entity/cache/{$entity2}.json"), true);
+                                                    foreach ($gg as $indice => $metadados) {
+                                                        if($metadados["column"] !== $content2["column"])
+                                                            continue;
+
+                                                        $content2["format"] = $metadados["format"];
+                                                        $content2["group"] = $metadados["group"];
+                                                        $g[$entity]["belongsTo"][$ii2][$entity2]["format"] = $content2["format"];
+                                                        $g[$entity]["belongsTo"][$ii2][$entity2]["group"] = $content2["group"];
+
+                                                        Config::createFile(PATH_HOME . "entity/general/general_info.json", json_encode($g));
+
+                                                        break;
+                                                    }
+                                                }
+
+                                                //exclui o item relacional da lista multipla
+                                                if(!empty($content2["format"])) {
+                                                    if($content2["format"] === "extend_folder") {
+                                                        self::exeSqlFree("
+                                                            UPDATE {$entity2} 
+                                                            SET {$content2["column"]} = JSON_REMOVE({$content2["column"]}, replace(replace(JSON_SEARCH({$content2["column"]}->'$[*].{$content["column"]}', 'one', \"{$item["id"]}\"), '\"', ''), '][', '].{$content["column"]}['))
+                                                            WHERE JSON_CONTAINS({$content2["column"]}->'$[*].{$content["column"]}', json_array(\"{$item["id"]}\"))
+                                                        ");
+                                                    } elseif($content2["format"] === "folder") {
+                                                        self::exeSqlFree("
+                                                            UPDATE {$entity2} 
+                                                            SET {$content2["column"]} = JSON_SET({$content2["column"]}, '$.{$content["column"]}', JSON_REMOVE(JSON_EXTRACT({$content2["column"]},'$.{$content["column"]}'), replace(JSON_SEARCH(JSON_EXTRACT({$content2["column"]},'$.{$content["column"]}'), 'one', \"{$item["id"]}\"), '\"', ''))) 
+                                                            WHERE JSON_CONTAINS(JSON_EXTRACT({$content2["column"]},'$.{$content["column"]}'), '\"{$item["id"]}\"', '$')
+                                                        ");
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     $react = new React("delete", $table, $item, $item);
                     $react = $react->getResponse();
 

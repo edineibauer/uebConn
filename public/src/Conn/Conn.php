@@ -105,6 +105,7 @@ abstract class Conn
                     \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES UTF8, @@sql_mode = STRICT_ALL_TABLES, @@foreign_key_checks = 1'
                 ];
                 self::$connect = new \PDO($dsn, self::$user, self::$pass, $options);
+                self::$connect->setAttribute(\PDO::ATTR_STRINGIFY_FETCHES, true);
             }
         } catch (\PDOException $e) {
             self::error("<b>Erro ao se conectar ao Banco</b><br><br> #Linha: {$e->getLine()}<br> {$e->getMessage()}", $e->getCode());

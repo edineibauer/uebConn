@@ -48,7 +48,14 @@ class Create extends Conn
     {
         $info = Metadados::getInfo($table);
 
+        //system_id
         $dados['system_id'] = (empty($dados['system_id']) ? (!empty($_SESSION['userlogin']['setorData']['system_id']) ? $_SESSION['userlogin']['setorData']['system_id'] : null) : $dados['system_id']);
+
+        //system_entity
+        if($_SESSION['userlogin']['setor'] !== "0") {
+            $infoUser = Metadados::getInfo($_SESSION['userlogin']['setor']);
+            $dados['system_entity'] = (empty($dados['system_id']) ? (!empty($infoUser['system']) ? $infoUser['system'] : null) : $dados['system_id']);
+        }
 
         if ($info['autor'] === 2)
             $dados['ownerpub'] = (empty($dados['ownerpub']) ? (!empty($_SESSION['userlogin']['id']) ? $_SESSION['userlogin']['id'] : null) : $dados['ownerpub']);

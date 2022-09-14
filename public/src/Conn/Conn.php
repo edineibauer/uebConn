@@ -116,10 +116,12 @@ abstract class Conn
 
     protected static function setDefault()
     {
-        self::setDatabase(DATABASE ?? null);
-        self::setHost(HOST ?? null);
-        self::setUser(USER ?? null);
-        self::setPass(PASS ?? null);
+        if(self::$database !== DATABASE) {
+            self::setDatabase(DATABASE ?? null);
+            self::setHost(HOST ?? null);
+            self::setUser(USER ?? null);
+            self::setPass(PASS ?? null);
+        }
         self::$result = "";
         self::$reactData = "";
         self::$rowCount = 0;

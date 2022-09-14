@@ -472,12 +472,13 @@ abstract class Conn
      * @param string $table
      * @param string|null $sql
      * @param array $places
+     * @return array
      */
-    private static function readExeSql(string $table, string $sql = null, array $places = [])
+    private static function readExeSql(string $table, string $sql = null, array $places = []): array
     {
         $read = new Read();
         $read->exeRead($table, $sql, $places);
-        return $read->getResult();
+        return $read->getResult() ?? [];
     }
 
     protected static function error($ErrMsg, $ErrNo = null)

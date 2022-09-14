@@ -27,9 +27,7 @@ class Read extends Conn
     }
 
     /**
-     * <b>Obter resultado:</b> Retorna um array com todos os resultados obtidos. Envelope primário númérico. Para obter
-     * um resultado chame o índice getResult()[0]!
-     * @return ARRAY $this = Array ResultSet
+     * @return mixed
      */
     public function getResult()
     {

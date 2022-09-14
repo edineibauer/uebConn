@@ -152,7 +152,7 @@ abstract class Conn
                 self::exeSqlDelete($table, $sql, $places);
                 break;
             case "create":
-                self::exeSqlCreate($table, $sql, $places, $dados);
+                self::exeSqlCreate($table, $sql, $places);
                 break;
         }
 
@@ -267,7 +267,6 @@ abstract class Conn
                     $namePlace = str_replace('-', '_', \Helpers\Check::name($Key));
                     if(is_numeric($ValueNumber) && (in_array($ValueSignal, ["+", "*", "/"]) || ($ValueSignal === "-" && $ValueSignalSpace))) {
                         $ValueNumber = ($ValueSignal === "/" && $ValueNumber == 0 ? 1 : $ValueNumber);
-                        $sqlSet[] = "`{$Key}` = " . $Key . " " . $ValueSignal . ":" . $namePlace;
                         $placesData[$namePlace] = $ValueNumber;
 
                         foreach ($dadosAfter as $i => $dadosTable)
@@ -438,10 +437,9 @@ abstract class Conn
      * @param string $table
      * @param string $sql
      * @param array $places
-     * @param array $dados
      * @return void
      */
-    private static function exeSqlCreate(string $table, string $sql = null, array $places = [], array $dados = [])
+    private static function exeSqlCreate(string $table, string $sql = null, array $places = [])
     {
         try {
             /**
@@ -474,9 +472,8 @@ abstract class Conn
      * @param string $table
      * @param string|null $sql
      * @param array $places
-     * @return array
      */
-    private static function readExeSql(string $table, string $sql = null, array $places = []): array
+    private static function readExeSql(string $table, string $sql = null, array $places = [])
     {
         $read = new Read();
         $read->exeRead($table, $sql, $places);

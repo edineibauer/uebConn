@@ -46,7 +46,7 @@ class Delete extends Conn
         if(!empty($places) && is_string($places))
             parse_str($places, $places);
 
-        $sql = "DELETE FROM " . (parent::getDatabase() === DATABASE ? PRE : "") . $tabela . " {$termos}";
+        $sql = "DELETE FROM " . $tabela . " {$termos}";
 
         list($this->result, $this->react, $this->rowCount, $this->error) = parent::exeSql("delete", $tabela, $sql, $places);
     }

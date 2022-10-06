@@ -127,7 +127,7 @@ class ForeignKey extends ForeignKeyMiddle
     private function findOneToOne()
     {
         $readI = new InfoTable();
-        $readI->ExeRead("KEY_COLUMN_USAGE", "WHERE TABLE_SCHEMA = :nb && REFERENCED_TABLE_SCHEMA = :nb && REFERENCED_TABLE_NAME != '" . PRE . "user' && TABLE_NAME = :tb", "nb={$this->db}&tb={$this->table}", !0, !0, !0);
+        $readI->ExeRead("KEY_COLUMN_USAGE", "WHERE TABLE_SCHEMA = :nb && REFERENCED_TABLE_SCHEMA = :nb && REFERENCED_TABLE_NAME != 'user' && TABLE_NAME = :tb", "nb={$this->db}&tb={$this->table}", !0, !0, !0);
         if ($readI->getResult()):
             foreach ($readI->getResult() as $g):
                 $readI->ExeRead("REFERENTIAL_CONSTRAINTS", "WHERE CONSTRAINT_SCHEMA = :nb && CONSTRAINT_NAME = :cn", "nb={$this->db}&cn={$g['CONSTRAINT_NAME']}", !0, !0, !0);
@@ -156,7 +156,7 @@ class ForeignKey extends ForeignKeyMiddle
     private function findOneToMany()
     {
         $readI = new InfoTable();
-        $readI->ExeRead("KEY_COLUMN_USAGE", "WHERE TABLE_SCHEMA = :nb && REFERENCED_TABLE_SCHEMA = :nb && TABLE_NAME != '" . PRE . "user' && REFERENCED_TABLE_NAME = :tb", "nb={$this->db}&tb={$this->table}", !0, !0, !0);
+        $readI->ExeRead("KEY_COLUMN_USAGE", "WHERE TABLE_SCHEMA = :nb && REFERENCED_TABLE_SCHEMA = :nb && TABLE_NAME != 'user' && REFERENCED_TABLE_NAME = :tb", "nb={$this->db}&tb={$this->table}", !0, !0, !0);
         if ($readI->getResult()):
             foreach ($readI->getResult() as $g):
                 if ($this->getPk($g['TABLE_NAME']) && $this->acceptThisFluxo($g['TABLE_NAME'], $g['COLUMN_NAME'])):

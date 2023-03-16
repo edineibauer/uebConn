@@ -16,11 +16,11 @@ use Entity\React;
 
 abstract class Conn
 {
-    private static $host = HOST ?? null;
-    private static $user = USER ?? null;
-    private static $pass = PASS ?? null;
-    private static $database = DATABASE ?? null;
-    private static $port = PORT ?? 3306;
+    private static $host = null;
+    private static $user = null;
+    private static $pass = null;
+    private static $database = null;
+    private static $port = 3306;
     private static $error = "";
     private static $result = "";
     private static $reactData = "";
@@ -107,18 +107,35 @@ abstract class Conn
     {
         self::$error = "";
 
-        try {
-            if (self::$connect == null) {
-                $dsn = 'mysql:host=' . self::$host . ';port=' . self::$port . ';dbname=' . self::$database . ';charset=utf8mb4';
-                $options = [
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-                    \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES UTF8, @@sql_mode = STRICT_ALL_TABLES, @@foreign_key_checks = 1'
-                ];
-                self::$connect = new \PDO($dsn, self::$user, self::$pass, $options);
-                self::$connect->setAttribute(\PDO::ATTR_STRINGIFY_FETCHES, true);
+        if (self::$connect == null) {
+
+            if (empty(self::$host) || empty(self::$database) || empty(self::$user)) {
+                if (defined('HOST'))
+                    self::setHost(HOST);
+                if (defined('DATABASE'))
+                    self::setDatabase(DATABASE);
+                if (defined('USER'))
+                    self::setUser(USER);
+                if (defined('PASS'))
+                    self::setPass(PASS);
+                if (defined('PORT'))
+                    self::setPort(PORT);
             }
-        } catch (\PDOException $e) {
-            self::error("<b>Erro ao se conectar ao Banco</b><br><br> #Linha: {$e->getLine()}<br> {$e->getMessage()}", $e->getCode());
+
+            if (!empty(self::$host) && !empty(self::$database) && !empty(self::$user)) {
+
+                try {
+                    $dsn = 'mysql:host=' . self::$host . ';port=' . self::$port . ';dbname=' . self::$database . ';charset=utf8mb4';
+                    $options = [
+                        \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                        \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES UTF8, @@sql_mode = STRICT_ALL_TABLES, @@foreign_key_checks = 1'
+                    ];
+                    self::$connect = new \PDO($dsn, self::$user, self::$pass, $options);
+                    self::$connect->setAttribute(\PDO::ATTR_STRINGIFY_FETCHES, true);
+                } catch (\PDOException $e) {
+                    self::error("<b>Erro ao se conectar ao Banco</b><br><br> #Linha: {$e->getLine()}<br> {$e->getMessage()}", $e->getCode());
+                }
+            }
         }
 
         return self::$connect;

@@ -20,6 +20,7 @@ abstract class Conn
     private static $user = USER ?? null;
     private static $pass = PASS ?? null;
     private static $database = DATABASE ?? null;
+    private static $port = PORT ?? 3306;
     private static $error = "";
     private static $result = "";
     private static $reactData = "";
@@ -51,6 +52,15 @@ abstract class Conn
     public static function setPass(string $pass)
     {
         self::$pass = $pass;
+    }
+
+    /**
+     * @param string $port
+     * @return void
+     */
+    public static function setPort(string $port)
+    {
+        self::$port = $port;
     }
 
     /**
@@ -99,7 +109,7 @@ abstract class Conn
 
         try {
             if (self::$connect == null) {
-                $dsn = 'mysql:host=' . self::$host . ';dbname=' . self::$database;
+                $dsn = 'mysql:host=' . self::$host . ';port=' . self::$port . ';dbname=' . self::$database . ';charset=utf8mb4';
                 $options = [
                     \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
                     \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES UTF8, @@sql_mode = STRICT_ALL_TABLES, @@foreign_key_checks = 1'
@@ -121,6 +131,7 @@ abstract class Conn
             self::setHost(HOST ?? null);
             self::setUser(USER ?? null);
             self::setPass(PASS ?? null);
+            self::setPort(PORT ?? 3306);
         }
         self::$result = "";
         self::$reactData = "";
@@ -130,8 +141,8 @@ abstract class Conn
 
     /**
      * @param string $action
-     * @param string $table
-     * @param string $sql
+     * @param string|null $table
+     * @param string|null $sql
      * @param array $places
      * @param array $dados
      * @return array

@@ -44,7 +44,7 @@ class SqlCommand extends Conn
      * @param $ignoreOwnerpub
      * @return void
      */
-    public function exeCommand(string $query, $ignoreSystem = null, $ignoreOwnerpub = null)
+    public function exeCommand(string $query)
     {
         $action = (preg_match('/^(SELECT|SHOW) /i', trim($query)) ? "read" : "sql");
         list($this->result, $react, $this->rowCount, $this->error) = self::exeSql($action, null, trim($query));

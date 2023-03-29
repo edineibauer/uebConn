@@ -19,14 +19,6 @@ class Read extends Conn
     private $error;
 
     /**
-     * Read constructor.
-     * @param bool $ignoreSystem
-     */
-    public function __construct(bool $ignoreSystem = false, bool $ignoreOwner = false, bool $ignorePermission = false)
-    {
-    }
-
-    /**
      * @return mixed
      */
     public function getResult()

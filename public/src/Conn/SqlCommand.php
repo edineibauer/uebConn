@@ -15,15 +15,6 @@ class SqlCommand extends Conn
     private $error;
 
     /**
-     * SqlCommand constructor.
-     * @param bool $ignoreSystem
-     * @param bool $ignoreOwnerpub
-     */
-    public function __construct(bool $ignoreSystem = false, bool $ignoreOwnerpub = false)
-    {
-    }
-
-    /**
      * @return mixed
      */
     public function getResult()

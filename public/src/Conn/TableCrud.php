@@ -96,7 +96,7 @@ class TableCrud
 
         $this->exist = false;
         $read = new Read();
-        $read->exeRead($this->table, "WHERE :att = :avv", ["att" => $attr, "avv" => $value]);
+        $read->exeRead($this->table, "WHERE {$attr} = :avv", ["avv" => $value]);
         if ($read->getResult()):
             $this->exist = true;
             foreach ($read->getResult()[0] as $key => $value):

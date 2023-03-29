@@ -243,15 +243,29 @@ abstract class Conn
              * Executa a operação no banco
              */
             $conn = self::getConn();
-            $op = $conn->prepare($sql);
 
-            if (!empty($places)) {
+            /**
+             * se tiver IN na clausula, corrige places
+             */
+            if (!empty($places) && strpos(str_replace(" in(", " IN(", $sql), " IN(") !== false) {
                 foreach ($places as $Vinculo => $Valor) {
-                    if ($Vinculo == 'limit' || $Vinculo == 'offset')
-                        $Valor = (int)$Valor;
-
-                    $op->bindValue(":{$Vinculo}", $Valor, (is_int($Valor) ? \PDO::PARAM_INT : \PDO::PARAM_STR));
+                    if (!empty($Valor) && strpos($Valor, ',') !== false && strpos(str_replace(" in(", " IN(", $sql), " IN(:{$Vinculo})") !== false) {
+                        $newSqlIn = "";
+                        foreach (explode(',', $Valor) as $i => $item) {
+                            $v = 'inHostValue' . $i;
+                            $newSqlIn .= (!empty($newSqlIn) ? ", " : "") .  ":{$v}";
+                            $places[$v] = trim($item);
+                        }
+                        unset($places[$Vinculo]);
+                        $sql = str_replace([" IN(:{$Vinculo})", " in(:{$Vinculo})"], " IN({$newSqlIn})", $sql);
+                    }
                 }
+            }
+
+            $op = $conn->prepare($sql);
+            if (!empty($places)) {
+                foreach ($places as $Vinculo => $Valor)
+                    $op->bindValue(":{$Vinculo}", $Valor, ((is_numeric($Valor) && $Valor > 0 && ((int) $Valor) == $Valor) ? \PDO::PARAM_INT : \PDO::PARAM_STR));
             }
 
             $op->setFetchMode(\PDO::FETCH_ASSOC);

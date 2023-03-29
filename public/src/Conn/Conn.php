@@ -247,9 +247,10 @@ abstract class Conn
             /**
              * se tiver IN na clausula, corrige places
              */
-            if (!empty($places) && strpos(str_replace(" in(", " IN(", $sql), " IN(") !== false) {
+            $sql = str_replace([" in(", " in (", " IN ("], " IN(", $sql);
+            if (!empty($places) && strpos($sql, " IN(") !== false) {
                 foreach ($places as $Vinculo => $Valor) {
-                    if (!empty($Valor) && strpos($Valor, ',') !== false && strpos(str_replace(" in(", " IN(", $sql), " IN(:{$Vinculo})") !== false) {
+                    if (!empty($Valor) && strpos($Valor, ',') !== false && strpos($sql, " IN(:{$Vinculo})") !== false) {
                         $newSqlIn = "";
                         foreach (explode(',', $Valor) as $i => $item) {
                             $v = 'inHostValue' . $i;
@@ -257,7 +258,7 @@ abstract class Conn
                             $places[$v] = trim($item);
                         }
                         unset($places[$Vinculo]);
-                        $sql = str_replace([" IN(:{$Vinculo})", " in(:{$Vinculo})"], " IN({$newSqlIn})", $sql);
+                        $sql = str_replace(" IN(:{$Vinculo})", " IN({$newSqlIn})", $sql);
                     }
                 }
             }

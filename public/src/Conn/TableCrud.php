@@ -90,13 +90,13 @@ class TableCrud
     public function load($attr, $value = null)
     {
         $attrTemp = $value ? $attr : "id";
-        $value = $value ? $value : $attr;
+        $value = $value ?? $attr;
         $attr = $attrTemp;
         unset($attrTemp);
 
         $this->exist = false;
         $read = new Read();
-        $read->ExeRead($this->table, "WHERE {$attr} = '" . str_replace("'", "''", $value) . "'", null, !0, !0, !0);
+        $read->exeRead($this->table, "WHERE :att = :avv", ["att" => $attr, "avv" => $value]);
         if ($read->getResult()):
             $this->exist = true;
             foreach ($read->getResult()[0] as $key => $value):
@@ -125,7 +125,7 @@ class TableCrud
     {
         $this->exist = false;
         $read = new Read();
-        $read->ExeRead($this->table, "WHERE {$sql}", null, !0, !0, !0);
+        $read->exeRead($this->table, "WHERE {$sql}");
         if ($read->getResult()):
             $this->exist = true;
             foreach ($read->getResult()[0] as $key => $value):
@@ -154,7 +154,7 @@ class TableCrud
         if (!$this->colunas):
             $db = DATABASE;
             $read = new InfoTable();
-            $read->exeRead("COLUMNS", "WHERE TABLE_SCHEMA = :nb && TABLE_NAME = :nt", "nb={$db}&nt={$this->table}", !0, !0, !0);
+            $read->exeRead("COLUMNS", "WHERE TABLE_SCHEMA = :nb && TABLE_NAME = :nt", ["nb" => $db, "nt" => $this->table]);
             if ($read->getResult()):
                 foreach ($read->getResult() as $gg):
                     $this->colunas[] = $gg['COLUMN_NAME'];

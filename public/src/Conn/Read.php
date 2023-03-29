@@ -67,12 +67,9 @@ class Read extends Conn
      * @param $table
      * @param $termos
      * @param $places
-     * @param $ignoreSystem
-     * @param $ignoreOwnerpub
-     * @param $ignorePermission
      * @return void
      */
-    public function exeRead($table, $termos = null, $places = [], $ignoreSystem = null, $ignoreOwnerpub = null, $ignorePermission = null)
+    public function exeRead($table, $termos = null, $places = [])
     {
         if (!empty($places) && is_string($places))
             parse_str($places, $places);

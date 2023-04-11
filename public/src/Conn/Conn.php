@@ -186,6 +186,18 @@ abstract class Conn
 
         $dadosReturn = [self::$result, self::$reactData, self::$rowCount, self::$error];
 
+        if(!empty(self::$error)) {
+            $create = new Create();
+            $create->exeCreate("entity_crud_error", [
+                "entidade" => $table,
+                "operacao" => $action,
+                "sql_executado" => $sql,
+                "places" => json_encode($places),
+                "erro_retornado" => self::$error,
+                "data" => date("Y-m-d H:i:s")
+            ]);
+        }
+
         self::setDefault();
 
         return $dadosReturn;

@@ -187,9 +187,9 @@ abstract class Conn
         $dadosReturn = [self::$result, self::$reactData, self::$rowCount, self::$error];
 
         if(!empty(self::$error) && $table !== "entity_crud_error") {
-            $sql = new SqlCommand();
-            $sql->exeCommand("SHOW TABLES LIKE 'entity_crud_error'");
-            if($sql->getRowCount()) {
+            $sqlcc = new SqlCommand();
+            $sqlcc->exeCommand("SHOW TABLES LIKE 'entity_crud_error'");
+            if($sqlcc->getRowCount()) {
                 $create = new Create();
                 $create->exeCreate("entity_crud_error", [
                     "entidade" => $table,

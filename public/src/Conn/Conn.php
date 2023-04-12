@@ -196,7 +196,7 @@ abstract class Conn
                     "operacao" => $action,
                     "sql_executado" => $sql,
                     "places" => json_encode($places),
-                    "erro_retornado" => self::$error,
+                    "erro_retornado" => json_encode(self::$error),
                     "data" => date("Y-m-d H:i:s")
                 ]);
             }

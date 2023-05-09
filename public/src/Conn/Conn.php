@@ -238,9 +238,11 @@ abstract class Conn
              */
             $conn = self::getConn();
             $op = $conn->prepare($sql);
+
+            $op->setFetchMode(\PDO::FETCH_ASSOC);
             $op->execute();
 
-            self::setResult(1, 1);
+            self::setResult($op->fetchAll(), $op->rowCount());
 
         } catch (\PDOException $e) {
             self::setError("<b>Erro no SQL:</b> " . $e->getMessage());

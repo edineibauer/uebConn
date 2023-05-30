@@ -55,14 +55,16 @@ class Create extends Conn
         if(!empty($_SESSION['userlogin']['setor']) && $_SESSION['userlogin']['setor'] !== "0") {
             $infoUser = Metadados::getInfo($_SESSION['userlogin']['setor']);
             $dados['system_entity'] = (empty($dados['system_entity']) ? (!empty($infoUser['system']) ? $infoUser['system'] : null) : $dados['system_entity']);
-        } elseif(empty($dados['system_entity'])) {
+        } elseif(empty($dados['system_entity']) && !empty($info)) {
             $dados['system_entity'] = $info['system'];
         }
 
-        if ($info['autor'] === 2)
-            $dados['ownerpub'] = (empty($dados['ownerpub']) ? (!empty($_SESSION['userlogin']['id']) ? $_SESSION['userlogin']['id'] : null) : $dados['ownerpub']);
-        elseif ($info['autor'] === 1)
-            $dados['autorpub'] = (empty($dados['autorpub']) ? (!empty($_SESSION['userlogin']['id']) ? $_SESSION['userlogin']['id'] : null) : $dados['autorpub']);
+        if(!empty($info)) {
+            if ($info['autor'] === 2)
+                $dados['ownerpub'] = (empty($dados['ownerpub']) ? (!empty($_SESSION['userlogin']['id']) ? $_SESSION['userlogin']['id'] : null) : $dados['ownerpub']);
+            elseif ($info['autor'] === 1)
+                $dados['autorpub'] = (empty($dados['autorpub']) ? (!empty($_SESSION['userlogin']['id']) ? $_SESSION['userlogin']['id'] : null) : $dados['autorpub']);
+        }
 
         $Fileds = "`" . implode("`, `", array_keys($dados)) . "`";
         $places = [];

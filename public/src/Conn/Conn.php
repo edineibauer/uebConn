@@ -166,6 +166,29 @@ abstract class Conn
      */
     protected static function exeSql(string $action, string $table = null, string $sql = null, array $places = [], array $dados = []): array
     {
+
+        /**
+         * se tiver IN na clausula, corrige places
+         */
+
+        if($action !== "sql") {
+            $sql = str_replace([" in(", " in (", " IN ("], " IN(", $sql);
+            if (!empty($places) && strpos($sql, " IN(") !== false) {
+                foreach ($places as $Vinculo => $Valor) {
+                    if (!empty($Valor) && strpos($Valor, ',') !== false && strpos($sql, " IN(:{$Vinculo})") !== false) {
+                        $newSqlIn = "";
+                        foreach (explode(',', $Valor) as $i => $item) {
+                            $v = 'inHostValue' . $i;
+                            $newSqlIn .= (!empty($newSqlIn) ? ", " : "") . ":{$v}";
+                            $places[$v] = trim($item);
+                        }
+                        unset($places[$Vinculo]);
+                        $sql = str_replace(" IN(:{$Vinculo})", " IN({$newSqlIn})", $sql);
+                    }
+                }
+            }
+        }
+
         switch ($action) {
             case "sql":
                 self::exeSqlFree($sql);
@@ -261,25 +284,6 @@ abstract class Conn
              * Executa a operação no banco
              */
             $conn = self::getConn();
-
-            /**
-             * se tiver IN na clausula, corrige places
-             */
-            $sql = str_replace([" in(", " in (", " IN ("], " IN(", $sql);
-            if (!empty($places) && strpos($sql, " IN(") !== false) {
-                foreach ($places as $Vinculo => $Valor) {
-                    if (!empty($Valor) && strpos($Valor, ',') !== false && strpos($sql, " IN(:{$Vinculo})") !== false) {
-                        $newSqlIn = "";
-                        foreach (explode(',', $Valor) as $i => $item) {
-                            $v = 'inHostValue' . $i;
-                            $newSqlIn .= (!empty($newSqlIn) ? ", " : "") .  ":{$v}";
-                            $places[$v] = trim($item);
-                        }
-                        unset($places[$Vinculo]);
-                        $sql = str_replace(" IN(:{$Vinculo})", " IN({$newSqlIn})", $sql);
-                    }
-                }
-            }
 
             $op = $conn->prepare($sql);
             if (!empty($places)) {

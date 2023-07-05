@@ -267,6 +267,9 @@ abstract class Conn
 
             self::setResult($op->fetchAll(), $op->rowCount());
 
+            $op->closeCursor();
+            $conn = null;
+
         } catch (\PDOException $e) {
             self::setError("<b>Erro no SQL:</b> " . $e->getMessage());
         }
@@ -295,6 +298,9 @@ abstract class Conn
             $op->execute($places);
 
             self::setResult($op->fetchAll(), $op->rowCount());
+
+            $op->closeCursor();
+            $conn = null;
 
         } catch (\PDOException $e) {
             self::setError("<b>Erro ao Ler:</b> " . $e->getMessage());
@@ -347,6 +353,9 @@ abstract class Conn
 
                 $op->execute(array_merge($places, $placesData));
 
+                $op->closeCursor();
+                $conn = null;
+
                 /**
                  * Executa a reação para cada resultado da atualização
                  */
@@ -389,6 +398,9 @@ abstract class Conn
                 $conn = self::getConn();
                 $op = $conn->prepare($sql);
                 $op->execute($places);
+
+                $op->closeCursor();
+                $conn = null;
 
                 /**
                  * Executa a reação
@@ -514,6 +526,9 @@ abstract class Conn
             $op = $conn->prepare($sql);
             $op->execute($places);
             $lastId = $conn->lastInsertId();
+
+            $op->closeCursor();
+            $conn = null;
 
             $dados = self::readExeSql($table, "WHERE id = {$lastId}")[0];
 

@@ -48,16 +48,59 @@ class Create extends Conn
     {
         $info = Metadados::getInfo($table);
 
-        //system_id
-        $dados['system_id'] = (empty($dados['system_id']) ? (!empty($_SESSION['userlogin']['setorData']['system_id']) ? $_SESSION['userlogin']['setorData']['system_id'] : null) : $dados['system_id']);
+        /**
+         * Caso não seja informado um system_id
+         */
+        if(empty($dados['system_id'])) {
 
-        //system_entity
-        if(!empty($_SESSION['userlogin']['setor']) && $_SESSION['userlogin']['setor'] !== "0") {
-            $infoUser = Metadados::getInfo($_SESSION['userlogin']['setor']);
-            $dados['system_entity'] = (empty($dados['system_entity']) ? (!empty($infoUser['system']) ? $infoUser['system'] : null) : $dados['system_entity']);
-        } elseif(empty($dados['system_entity']) && !empty($info)) {
-            $dados['system_entity'] = $info['system'];
+            /**
+             * Verifica se o usuário que esta criando o registro tem um setor especificado
+             */
+            if(!empty($_SESSION['userlogin']['setor']) && !empty($_SESSION['userlogin']['setorData']['system_id'])) {
+
+                /**
+                 * Se não exige um usuário de setor específico ou se o usuário for do setor necessário
+                 */
+                if(empty($info['system']) || $_SESSION['userlogin']['setor'] === $info['system']) {
+
+                    $dados['system_id'] = $_SESSION['userlogin']['setorData']['system_id'];
+                    $dados['system_entity'] = $info['system'];
+
+                } else if($info['systemRequired']) {
+
+                    $this->error = "Obrigatório que o registro seja criado por um usuários do tipo '{$info['system']}'. Seu usuário é do tipo '{$_SESSION['userlogin']['setor']}'";
+
+                } else {
+
+                    /**
+                     * Como o usuário identificado que criou o registro é diferente do esperado e não é obrigatório essa informação, deixa null
+                     */
+                    $dados['system_id'] = null;
+                    $dados['system_entity'] = null;
+                }
+
+            } else if($info['systemRequired']) {
+
+                $this->error = "Obrigatório que o registro seja criado por um usuários identificado ou que seja informado no formulário.";
+
+            } else {
+                /**
+                 * Como o usuário identificado que criou o registro é diferente do esperado e não é obrigatório essa informação, deixa null
+                 */
+                $dados['system_id'] = null;
+                $dados['system_entity'] = null;
+            }
+
+        } elseif(empty($dados['system_entity'])) {
+
+            /**
+             * Caso seja informado um system_id, mas não seja informado um system_entity
+             */
+            $dados['system_entity'] = (!empty($info['system']) ? $info['system'] : $_SESSION['userlogin']['setor'] ?? null);
         }
+
+        if(!empty($this->error))
+            return;
 
         if(!empty($info)) {
             if ($info['autor'] === 2)

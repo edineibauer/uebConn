@@ -56,19 +56,21 @@ class Create extends Conn
             /**
              * Verifica se o usuário que esta criando o registro tem um setor especificado
              */
-            if(!empty($_SESSION['userlogin']['setor']) && !empty($_SESSION['userlogin']['setorData']['system_id'])) {
+            if(!empty($_SESSION['userlogin']['setor']) && !empty($_SESSION['userlogin']['system_id'])) {
+
+                $infoUser = Metadados::getInfo($_SESSION['userlogin']['setor']);
 
                 /**
                  * Se não exige um usuário de setor específico ou se o usuário for do setor necessário
                  */
-                if(empty($info['system']) || $_SESSION['userlogin']['setor'] === $info['system']) {
+                if(empty($info['system']) || $infoUser['system'] === $info['system']) {
 
-                    $dados['system_id'] = $_SESSION['userlogin']['setorData']['system_id'];
+                    $dados['system_id'] = $_SESSION['userlogin']['system_id'];
                     $dados['system_entity'] = $info['system'];
 
                 } else if($info['systemRequired']) {
 
-                    $this->error = "Obrigatório que o registro seja criado por um usuários do tipo '{$info['system']}'. Seu usuário é do tipo '{$_SESSION['userlogin']['setor']}'";
+                    $this->error = "Obrigatório que o registro seja criado por um usuários do tipo '{$info['system']}'. Seu usuário é do tipo '{$infoUser['system']}'";
 
                 } else {
 

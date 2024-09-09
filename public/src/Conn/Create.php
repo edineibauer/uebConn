@@ -81,6 +81,14 @@ class Create extends Conn
              */
             $infoUser = Metadados::getInfo($_SESSION['userlogin']['setor']);
             $dados['system_entity'] = $infoUser['system'];
+
+            //confirma se existe esse id para o sistema do usuário logado
+            $read = new Read();
+            $read->exeRead($dados['system_entity'], "WHERE id = :d", ["d" => $dados['system_id']]);
+            if(!$read->getResult()) {
+                $dados['system_id'] = null;
+                $dados['system_entity'] = null;
+            }
         }
 
         if(!empty($this->error))

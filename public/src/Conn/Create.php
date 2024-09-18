@@ -74,13 +74,14 @@ class Create extends Conn
                 $dados['system_entity'] = null;
             }
 
-        } elseif(empty($dados['system_entity']) && !empty($_SESSION['userlogin']['setor'])) {
+        } elseif(empty($dados['system_entity'])) {
 
-            /**
-             * Caso seja informado um system_id, mas não seja informado um system_entity
-             */
-            $infoUser = Metadados::getInfo($_SESSION['userlogin']['setor']);
-            $dados['system_entity'] = $infoUser['system'];
+            if(!empty($info['system'])) {
+                $dados['system_entity'] = $info['system'];
+            } else if(!empty($_SESSION['userlogin']['setor'])) {
+                $infoUser = Metadados::getInfo($_SESSION['userlogin']['setor']);
+                $dados['system_entity'] = $infoUser['system'];
+            }
 
             //confirma se existe esse id para o sistema do usuário logado
             $read = new Read();

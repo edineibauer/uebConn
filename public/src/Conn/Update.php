@@ -65,13 +65,23 @@ class Update extends Conn
 
         $sqlSet = [];
         foreach ($dados as $Key => $Value) {
-            $ValueSignal = substr(trim($Value), 0, 1);
-            $ValueSignalSpace = substr(trim($Value), 1, 1) === " ";
-            $ValueNumber = substr(str_replace(" ", "", trim($Value)), 1);
-
             $namePlace = str_replace('-', '_', \Helpers\Check::name($Key));
-            if(is_numeric($ValueNumber) && (in_array($ValueSignal, ["+", "*", "/"]) || ($ValueSignal === "-" && $ValueSignalSpace))) {
-                $sqlSet[] = "`{$Key}` = " . $Key . " " . $ValueSignal . ":" . $namePlace;
+
+            if(is_string($Value)) {
+                $ValueSignal = substr(trim($Value), 0, 1);
+
+                if(in_array($ValueSignal, ["+", "*", "/", "-"])) {
+                    $ValueSignalSpace = substr(trim($Value), 1, 1) === " ";
+                    $ValueNumber = substr(str_replace(" ", "", trim($Value)), 1);
+
+                    if (is_numeric($ValueNumber) && ($ValueSignal !== "-" || $ValueSignalSpace)) {
+                        $sqlSet[] = "`{$Key}` = " . $Key . " " . $ValueSignal . ":" . $namePlace;
+                    } else {
+                        $sqlSet[] = "`{$Key}` = :" . $namePlace;
+                    }
+                } else {
+                    $sqlSet[] = "`{$Key}` = :" . $namePlace;
+                }
             } else {
                 $sqlSet[] = "`{$Key}` = :" . $namePlace;
             }

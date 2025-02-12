@@ -331,21 +331,34 @@ abstract class Conn
 
                 $placesData = [];
                 foreach ($dados as $Key => $Value) {
-                    $ValueSignal = substr(trim($Value), 0, 1);
-                    $ValueSignalSpace = substr(trim($Value), 1, 1) === " ";
-                    $ValueNumber = substr(str_replace(" ", "", trim($Value)), 1);
-
                     $namePlace = str_replace('-', '_', \Helpers\Check::name($Key));
-                    if(is_numeric($ValueNumber) && (in_array($ValueSignal, ["+", "*", "/"]) || ($ValueSignal === "-" && $ValueSignalSpace))) {
-                        $ValueNumber = ($ValueSignal === "/" && $ValueNumber == 0 ? 1 : $ValueNumber);
-                        $placesData[$namePlace] = $ValueNumber;
 
-                        foreach ($dadosAfter as $i => $dadosTable)
-                            $dadosAfter[$i][$Key] = self::operation($dadosBefore[$i][$Key], $ValueSignal, $ValueNumber);
+                    if(is_string($Value)) {
+                        $ValueSignal = substr(trim($Value), 0, 1);
 
+                        if(in_array($ValueSignal, ["+", "*", "/", "-"])) {
+                            $ValueSignalSpace = substr(trim($Value), 1, 1) === " ";
+                            $ValueNumber = substr(str_replace(" ", "", trim($Value)), 1);
+
+                            if (is_numeric($ValueNumber) && ($ValueSignal !== "-" || $ValueSignalSpace)) {
+                                $ValueNumber = ($ValueSignal === "/" && $ValueNumber == 0 ? 1 : $ValueNumber);
+                                $placesData[$namePlace] = $ValueNumber;
+
+                                foreach ($dadosAfter as $i => $dadosTable)
+                                    $dadosAfter[$i][$Key] = self::operation($dadosBefore[$i][$Key], $ValueSignal, $ValueNumber);
+
+                            } else {
+                                $placesData[$namePlace] = $Value;
+                                foreach ($dadosAfter as $i => $dadosTable)
+                                    $dadosAfter[$i][$Key] = $Value;
+                            }
+                        } else {
+                            $placesData[$namePlace] = $Value;
+                            foreach ($dadosAfter as $i => $dadosTable)
+                                $dadosAfter[$i][$Key] = $Value;
+                        }
                     } else {
                         $placesData[$namePlace] = $Value;
-
                         foreach ($dadosAfter as $i => $dadosTable)
                             $dadosAfter[$i][$Key] = $Value;
                     }
